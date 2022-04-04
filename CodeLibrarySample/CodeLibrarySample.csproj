@@ -8,6 +8,11 @@
     <Authors>Brent Scriver</Authors>
     <Product>Jenkins NuGet Sample</Product>
     <Description>This is a sample NuGet package to demonstrate building with Jenkins.</Description>
+    <ApplicationIcon>cthulhujenkins.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="cthulhujenkins.ico" />
+  </ItemGroup>
 
 </Project>
