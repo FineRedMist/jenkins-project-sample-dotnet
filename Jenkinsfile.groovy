@@ -52,5 +52,12 @@ pipeline {
                     """
             }
         }
+        stage ("Run Tests") {
+            steps {
+                bat """
+                    \"${tool 'VSTest-2022'}\" /platform:x64 \"${slnFile}\" /logger:trx /inIsolation /ResultsDirectory:TestResults
+                    """
+            }
+        }
     }
 }
