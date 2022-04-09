@@ -55,8 +55,20 @@ pipeline {
         stage ("Run Tests") {
             steps {
                 bat """
+                    IF EXIST TestResults rmdir /s /q TestResults
                     \"${tool 'VSTest-2022'}\" /platform:x64 \"${slnFile}\" /logger:trx /inIsolation /ResultsDirectory:TestResults
                     """
+            }
+        }
+        stage ("Convert Test Output") {
+            steps {
+                script {
+                    testResult = gatherTestResults('TestResults/**/*.trx')
+                }
+
+                script {
+                    mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
+                }
             }
         }
     }
