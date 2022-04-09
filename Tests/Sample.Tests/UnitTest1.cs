@@ -1,6 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace TestSample
+namespace Sample.Tests
 {
     [TestClass]
     public class UnitTest1

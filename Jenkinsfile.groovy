@@ -56,11 +56,30 @@ pipeline {
             steps {
                 bat """
                     IF EXIST TestResults rmdir /s /q TestResults
-                    \"${tool 'VSTest-2022'}\" /platform:x64 \"${slnFile}\" /logger:trx /inIsolation /ResultsDirectory:TestResults
+                    \"${tool 'VSTest-2022'}\" /platform:x64 \"${slnFile}\" /logger:trx /inIsolation /EnableCodeCoverage /ResultsDirectory:TestResults
                     """
             }
         }
-        stage ("Convert Test Output") {
+        stage ("Process Code Coverage") {
+            steps {
+                script {
+                    // Find all the .coverage files to convert to .coveragexml (by merging)
+                    def coverageFiles = ''
+                    findFiles(glob: 'TestResults/**/*.coverage').each {
+                        def path = it.toString();
+                        if(coverage.length() > 0) {
+                            coverageFiles = coverageFiles + " "
+                        }
+                        coverageFiles = coverageFiles + "\"${path}\""
+                    }
+
+                    bat """
+                    \"${tool 'CodeCoverage'}\" analyze /output:TestResults\vstest.coveragexml ${coverageFiles}
+                    """
+                }
+            }
+        }
+        stage ("Convert Test Output for Jenkins") {
             steps {
                 script {
                     mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
