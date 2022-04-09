@@ -63,10 +63,6 @@ pipeline {
         stage ("Convert Test Output") {
             steps {
                 script {
-                    testResult = gatherTestResults('TestResults/**/*.trx')
-                }
-
-                script {
                     mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
                 }
             }
