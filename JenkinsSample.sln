@@ -3,14 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32328.378
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeLibrarySample", "CodeLibrarySample\CodeLibrarySample.csproj", "{DCC3F81B-B1E6-4610-9B03-3E483835ADF4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeLibrarySample", "CodeLibrarySample\CodeLibrarySample.csproj", "{DCC3F81B-B1E6-4610-9B03-3E483835ADF4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{B9E0DD30-086E-4053-8DE6-A3376381B510}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestSample", "Tests\TestSample\TestSample.csproj", "{75CED844-4712-4F6C-B878-D5D4E983FC52}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestSample", "Tests\TestSample\TestSample.csproj", "{75CED844-4712-4F6C-B878-D5D4E983FC52}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BC3571C2-01E2-409A-8F4C-1F1A6B682343}"
 	ProjectSection(SolutionItems) = preProject
+		Jenkinsfile.groovy = Jenkinsfile.groovy
 		README.md = README.md
 	EndProjectSection
 EndProject
