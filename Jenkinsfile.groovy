@@ -1,3 +1,7 @@
+
+// The solution file we found to build. Ideally only one per GitHub repository.
+def slnFile = ""
+
 pipeline {
     // Run on any available Jenkins agent.
     agent any
@@ -14,11 +18,35 @@ pipeline {
         pollSCM 'H * * * *'
     }
     stages {
-        stage('This is a test!') {
+        stage('Find Solution') {
             steps {
                 script {
-                    print 'Hello World!'
+                    // Search the repository for a file ending in .sln.
+                    findFiles(glob: '**').each {
+                        def path = it.toString();
+                        if(path.toLowerCase().endsWith('.sln')) {
+                            slnFile = path;
+                        }
+                    }
+                    if(slnFile.length() == 0) {
+                        throw new Exception('No solution files were found to build in the root of the git repository.')
+                    }
+                    echo "Found solution: ${slnFile}"
                 }
+            }
+        }
+        stage('Restore NuGet For Solution') {
+            steps {
+                bat """
+                    \"${tool 'NuGet-2022'}\" restore ${slnFile} -NoCache -NonInteractive
+                    """
+            }
+        }
+        stage('Build Solution') {
+            steps {
+                bat """
+                    \"${tool 'MSBuild-2022'}\" ${slnFile} /p:Configuration=Release /p:Platform=\"Any CPU\" /p:ProductVersion=1.0.${env.BUILD_NUMBER}.0
+                    """
             }
         }
     }
