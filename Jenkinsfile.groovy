@@ -73,7 +73,6 @@ pipeline {
                     }
                     // Runs the tests in parallel
                     parallel tests
-
                 }
             }
         }
