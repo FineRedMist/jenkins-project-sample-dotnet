@@ -76,5 +76,12 @@ pipeline {
                 }
             }
         }
+        stage ("Convert Test Output") {
+            steps {
+                script {
+                    mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
+                }
+            }
+        }
     }
 }
