@@ -54,35 +54,26 @@ pipeline {
         }
         stage ("Run Tests") {
             steps {
-                bat """
-                    IF EXIST TestResults rmdir /s /q TestResults
-                    \"${tool 'VSTest-2022'}\" /platform:x64 \"${slnFile}\" /logger:trx /inIsolation /EnableCodeCoverage /ResultsDirectory:TestResults
-                    """
-            }
-        }
-        stage ("Process Code Coverage") {
-            steps {
                 script {
-                    // Find all the .coverage files to convert to .coveragexml (by merging)
-                    def coverageFiles = ''
-                    findFiles(glob: 'TestResults/**/*.coverage').each {
-                        def path = it.toString();
-                        if(coverage.length() > 0) {
-                            coverageFiles = coverageFiles + " "
-                        }
-                        coverageFiles = coverageFiles + "\"${path}\""
-                    }
+                    // Clean up any old test output from before so it doesn't contaminate this run.
+                    bat "IF EXIST TestResults rmdir /s /q TestResults"
 
-                    bat """
-                    \"${tool 'CodeCoverage'}\" analyze /output:TestResults\vstest.coveragexml ${coverageFiles}
-                    """
-                }
-            }
-        }
-        stage ("Convert Test Output for Jenkins") {
-            steps {
-                script {
-                    mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
+                    // The collection of tests to the work to do
+                    def tests = [:]
+
+                    // Find all the Test dlls that were built.
+                    def testAntPath = "**/bin/**/*.Tests.dll"
+                    findFiles(glob: testAntPath).each { f ->
+                        String fullName = f
+
+                        // Add a command to the map to run that test.
+                        tests["${fullName}"] = {
+                            bat "\"${tool 'VSTest-2022'}\" /platform:x64 \"${fullName}\" /logger:trx /inIsolation /ResultsDirectory:TestResults"
+                        }
+                    }
+                    // Runs the tests in parallel
+                    parallel tests
+
                 }
             }
         }
