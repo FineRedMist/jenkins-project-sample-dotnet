@@ -88,12 +88,14 @@ pipeline {
             // This way other branches will test without interfering with releases.
             steps {
                 withCredentials([string(credentialsId: 'Nexus-NuGet-API-Key', variable: 'APIKey')]) { 
-                    // Find all the Test dlls that were built.
-                    def nupkgFiles = "**/*.nupkg"
-                    findFiles(glob: nupkgFiles).each 
-                    bat """
-                        \"${tool 'NuGet-2022'}\" push \"${it}\" -NonInteractive -APIKey ${APIKey} -Src http://localhost:8081/repository/nuget-hosted
-                        """
+                    // Find all the nuget packages to publish.
+                    script {
+                        def nupkgFiles = "**/*.nupkg"
+                        findFiles(glob: nupkgFiles).each 
+                        bat """
+                            \"${tool 'NuGet-2022'}\" push \"${it}\" -NonInteractive -APIKey ${APIKey} -Src http://localhost:8081/repository/nuget-hosted
+                            """
+                    }
                 }
             }
         }
