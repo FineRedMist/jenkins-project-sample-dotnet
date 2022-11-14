@@ -91,10 +91,11 @@ pipeline {
                     // Find all the nuget packages to publish.
                     script {
                         def nupkgFiles = "**/*.nupkg"
-                        findFiles(glob: nupkgFiles).each 
-                        bat """
-                            \"${tool 'NuGet-2022'}\" push \"${it}\" -NonInteractive -APIKey ${APIKey} -Src http://localhost:8081/repository/nuget-hosted
-                            """
+                        findFiles(glob: nupkgFiles).each  { it ->
+                            bat """
+                                \"${tool 'NuGet-2022'}\" push \"${it}\" -NonInteractive -APIKey ${APIKey} -Src http://localhost:8081/repository/nuget-hosted
+                                """
+                        }
                     }
                 }
             }
