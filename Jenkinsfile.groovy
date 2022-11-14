@@ -86,6 +86,12 @@ pipeline {
         stage("NuGet Publish") {
             // We are only going to publish to NuGet when the branch is main or master.
             // This way other branches will test without interfering with releases.
+            when {
+                anyOf {
+                    branch 'master';
+                    branch 'main';
+                }
+            }
             steps {
                 withCredentials([string(credentialsId: 'Nexus-NuGet-API-Key', variable: 'APIKey')]) { 
                     // Find all the nuget packages to publish.
