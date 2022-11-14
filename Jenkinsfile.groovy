@@ -83,5 +83,19 @@ pipeline {
                 }
             }
         }
+        stage("NuGet Publish") {
+            // We are only going to publish to NuGet when the branch is main or master.
+            // This way other branches will test without interfering with releases.
+            steps {
+                withCredentials([string(credentialsId: 'Nexus-NuGet-API-Key', variable: 'APIKey')]) { 
+                    // Find all the Test dlls that were built.
+                    def nupkgFiles = "**/*.nupkg"
+                    findFiles(glob: nupkgFiles).each 
+                    bat """
+                        \"${tool 'NuGet-2022'}\" push \"${it}\" -NonInteractive -APIKey ${APIKey} -Src http://localhost:8081/repository/nuget-hosted
+                        """
+                }
+            }
+        }
     }
 }
