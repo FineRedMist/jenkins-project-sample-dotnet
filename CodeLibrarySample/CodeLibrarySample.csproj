@@ -13,6 +13,16 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <NoWarn>1701;1702;NU1803</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <NoWarn>1701;1702;NU1803</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
     <Content Include="cthulhujenkins.ico" />
   </ItemGroup>
