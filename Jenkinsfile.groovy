@@ -55,7 +55,7 @@ pipeline {
                     if(buildConfig.containsKey('Version')) {
                         def buildVersion = buildConfig['Version']
                         // Count the parts, and add any missing zeroes to get up to 3, then add the build version.
-                        def parts = new ArrayList(buildVersion.split('\\.'))
+                        def parts = new ArrayList(buildVersion.split('\\.').asList())
                         echo "Build version: ${buildVersion}"
                         echo "Build version parts: ${parts}, ${parts.getClass()}"
                         while(parts.size() < 3) {
@@ -124,7 +124,7 @@ pipeline {
                 script {
                     def packageText = bat(returnStdOut: true, script: "\"${tool 'NuGet-2022'}\" list \"${nugetPkg}\" -NonInteractive -Src http://localhost:8081/repository/nuget-hosted")
                     packageText = packageText.replaceAll("\r", "")
-                    def packages = new ArrayList(packages.split("\n"))
+                    def packages = new ArrayList(packages.split("\n").asList())
                     packages.removeAll { line -> line.toLowerCase().startsWith("warning: ") }
                     packages = packages.collect { pkg -> pkg.replaceAll(' ', '.') }
 
