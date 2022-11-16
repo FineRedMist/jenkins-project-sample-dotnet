@@ -9,3 +9,4 @@ The corresponding blog posts (so far) are available at:
  * https://www.oneoddsock.com/blog/2022/04/08/ci-cd-scanning-github-for-repositories-from-jenkins/
  * https://www.oneoddsock.com/blog/2022/04/08/ci-cd-building-a-c-project-in-jenkins/
  * https://www.oneoddsock.com/blog/2022/04/10/ci-cd-running-project-tests/
+ * https://www.oneoddsock.com/blog/2022/11/16/ci-cd-publishing-nuget-packages/
