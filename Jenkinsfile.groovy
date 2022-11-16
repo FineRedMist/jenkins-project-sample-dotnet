@@ -1,6 +1,8 @@
 
 // The solution file we found to build. Ideally only one per GitHub repository.
 def slnFile = ""
+def version = "1.0.0.${env.BUILD_NUMBER}"
+def nugetVersion = version
 
 pipeline {
     // Run on any available Jenkins agent.
@@ -18,6 +20,14 @@ pipeline {
         pollSCM 'H * * * *'
     }
     stages {
+        stage('Clean Old NuGet Packages') {
+            steps {
+                bat """
+                    del /s /q *.nupkg *.snupkg
+                    exit /b 0
+                """
+            }
+        }
         stage('Find Solution') {
             steps {
                 script {
@@ -45,10 +55,35 @@ pipeline {
                     """
             }
         }
+        stage('Configure Build Settings') {
+            when { expression { return fileExists ('Configuration.json') } }
+            steps {
+                script {
+                    def buildConfig = readJSON file: 'Configuration.json'
+                    if(buildConfig.containsKey('Version')) {
+                        def buildVersion = buildConfig['Version']
+                        // Count the parts, and add any missing zeroes to get up to 3, then add the build version.
+                        def parts = new ArrayList(buildVersion.split('\\.').toList())
+                        while(parts.size() < 3) {
+                            parts << "0"
+                        }
+                        // The nuget version does not include the build number.
+                        nugetVersion = parts.join('.')
+                        if(parts.size() < 4) {
+                            parts << env.BUILD_NUMBER
+                        }
+                        // This version is for the file and assembly versions.
+                        version = parts.join('.')
+                    }
+                }
+            }
+        }
         stage('Build Solution') {
             steps {
+                echo "Setting NuGet Package version to: ${nugetVersion}"
+                echo "Setting File and Assembly version to ${version}"
                 bat """
-                    \"${tool 'MSBuild-2022'}\" ${slnFile} /p:Configuration=Release /p:Platform=\"Any CPU\" /p:ProductVersion=1.0.${env.BUILD_NUMBER}.0
+                    \"${tool 'MSBuild-2022'}\" ${slnFile} /p:Configuration=Release /p:Platform=\"Any CPU\" /p:PackageVersion=${nugetVersion} /p:Version=${version}
                     """
             }
         }
@@ -80,6 +115,50 @@ pipeline {
             steps {
                 script {
                     mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
+                }
+            }
+        }
+        stage('Preexisting NuGet Package Check') {
+            steps {
+                // Find all the nuget packages to publish.
+                script {
+                    def packageText = bat(returnStdout: true, script: "\"${tool 'NuGet-2022'}\" list -NonInteractive -Source http://localhost:8081/repository/nuget-hosted")
+                    packageText = packageText.replaceAll("\r", "")
+                    def packages = new ArrayList(packageText.split("\n").toList())
+                    packages.removeAll { line -> line.toLowerCase().startsWith("warning: ") }
+                    packages = packages.collect { pkg -> pkg.replaceAll(' ', '.') }
+
+                    def nupkgFiles = "**/*.nupkg"
+                    findFiles(glob: nupkgFiles).each { nugetPkg ->
+                        def pkgName = nugetPkg.getName()
+                        pkgName = pkgName.substring(0, pkgName.length() - 6) // Remove extension
+                        if(packages.contains(pkgName)) {
+                            error "The package ${pkgName} is already in the NuGet repository."
+                        }
+                    }
+                }
+            }
+        }
+        stage("NuGet Publish") {
+            // We are only going to publish to NuGet when the branch is main or master.
+            // This way other branches will test without interfering with releases.
+            when {
+                anyOf {
+                    branch 'master';
+                    branch 'main';
+                }
+            }
+            steps {
+                withCredentials([string(credentialsId: 'Nexus-NuGet-API-Key', variable: 'APIKey')]) { 
+                    // Find all the nuget packages to publish.
+                    script {
+                        def nupkgFiles = "**/*.nupkg"
+                        findFiles(glob: nupkgFiles).each { nugetPkg ->
+                            bat """
+                                \"${tool 'NuGet-2022'}\" push \"${nugetPkg}\" -NonInteractive -APIKey ${APIKey} -Src http://localhost:8081/repository/nuget-hosted
+                                """
+                        }
+                    }
                 }
             }
         }
