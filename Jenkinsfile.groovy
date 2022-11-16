@@ -29,6 +29,7 @@ pipeline {
                     findFiles(glob: "**/*.snupkg").each { snugetPkg ->
                         snugetPkg.delete()
                     }
+                }
             }
         }
         stage('Find Solution') {
