@@ -117,8 +117,8 @@ pipeline {
                     def packageText = bat(returnStdOut: true, script: "\"${tool 'NuGet-2022'}\" list \"${nugetPkg}\" -NonInteractive -Src http://localhost:8081/repository/nuget-hosted")
                     packageText = packageText.replaceAll("\r", "")
                     packages = packages.split("\n")
-                    packages.removeAll { it.toLowerCase().startsWith("warning: ") }
-                    packages = packages.collect { it -> it.replaceAll(' ', '.') }
+                    packages.removeAll { line -> line.toLowerCase().startsWith("warning: ") }
+                    packages = packages.collect { pkg -> pkg.replaceAll(' ', '.') }
 
                     def nupkgFiles = "**/*.nupkg"
                     findFiles(glob: nupkgFiles).each { nugetPkg ->
