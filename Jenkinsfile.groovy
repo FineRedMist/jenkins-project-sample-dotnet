@@ -114,7 +114,7 @@ pipeline {
             steps {
                 // Find all the nuget packages to publish.
                 script {
-                    def packageText = bat(returnStdOut: true, script: "\"${tool 'NuGet-2022'}\" list -NonInteractive -Src http://localhost:8081/repository/nuget-hosted")
+                    def packageText = bat(returnStdOut: true, script: "\"${tool 'NuGet-2022'}\" list -NonInteractive -Source http://localhost:8081/repository/nuget-hosted")
                     packageText = packageText.replaceAll("\r", "")
                     def packages = new ArrayList(packages.split("\n").toList())
                     packages.removeAll { line -> line.toLowerCase().startsWith("warning: ") }
