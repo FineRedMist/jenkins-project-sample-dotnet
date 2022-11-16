@@ -56,6 +56,8 @@ pipeline {
                         def buildVersion = buildConfig['Version']
                         // Count the parts, and add any missing zeroes to get up to 3, then add the build version.
                         def parts = buildVersion.split('\\.')
+                        echo "Build version: ${buildVersion}"
+                        echo "Build version parts: ${parts}"
                         while(parts.size() < 3) {
                             parts << '0'
                         }
