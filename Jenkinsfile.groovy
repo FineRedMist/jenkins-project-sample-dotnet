@@ -49,25 +49,31 @@ pipeline {
         }
         stage('Configure Build Settings') {
             when { expression { return fileExists ('Configuration.json') } }
-            def buildConfig = readJSON file: 'Configuration.json'
-            def buildVersion = buildConfig.find( it.key == 'Version')
-            // Count the parts, and add any missing zeroes to get up to 3, then add the build version.
-            if(buildVersion) {
-                def parts = buildVersion.split('\\.')
-                while(parts.size() < 3) {
-                    parts.add('0')
+            steps {
+                script {
+                    def buildConfig = readJSON file: 'Configuration.json'
+                    def buildVersion = buildConfig.find( it.key == 'Version')
+                    // Count the parts, and add any missing zeroes to get up to 3, then add the build version.
+                    if(buildVersion) {
+                        def parts = buildVersion.split('\\.')
+                        while(parts.size() < 3) {
+                            parts.add('0')
+                        }
+                        // The nuget version does not include the build number.
+                        nugetVersion = parts.join('.')
+                        if(parts.size() < 4) {
+                            parts.add("${env.BUILD_NUMBER}")
+                        }
+                        // This version is for the file and assembly versions.
+                        version = parts.join('.')
+                    }
                 }
-                // The nuget version does not include the build number.
-                nugetVersion = parts.join('.')
-                if(parts.size() < 4) {
-                    parts.add("${env.BUILD_NUMBER}")
-                }
-                // This version is for the file and assembly versions.
-                version = parts.join('.')
             }
         }
         stage('Build Solution') {
             steps {
+                echo "Setting NuGet Package version to: ${nugetVersion}"
+                echo "Setting File and Assembly version to ${version}"
                 bat """
                     \"${tool 'MSBuild-2022'}\" ${slnFile} /p:Configuration=Release /p:Platform=\"Any CPU\" /p:PackageVersion=${nugetVersion} /p:Version=${version}
                     """
