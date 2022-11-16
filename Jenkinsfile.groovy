@@ -56,24 +56,16 @@ pipeline {
                         def buildVersion = buildConfig['Version']
                         // Count the parts, and add any missing zeroes to get up to 3, then add the build version.
                         def parts = new ArrayList(buildVersion.split('\\.').toList())
-                        echo "Build version: ${buildVersion}"
-                        echo "Build version parts: ${parts}, ${parts.getClass()}"
                         while(parts.size() < 3) {
-                            echo "1, ${parts.size()}"
                             parts << "0"
-                            echo "2, ${parts.size()}"
                         }
                         // The nuget version does not include the build number.
                         nugetVersion = parts.join('.')
-                        echo "Nuget version: ${nugetVersion}"
                         if(parts.size() < 4) {
-                            echo "3, ${parts.size()}"
                             parts << env.BUILD_NUMBER
-                            echo "4, ${parts.size()}"
                         }
                         // This version is for the file and assembly versions.
                         version = parts.join('.')
-                        echo "Version: ${nugetVersion}"
                     }
                 }
             }
@@ -122,7 +114,7 @@ pipeline {
             steps {
                 // Find all the nuget packages to publish.
                 script {
-                    def packageText = bat(returnStdOut: true, script: "\"${tool 'NuGet-2022'}\" list \"${nugetPkg}\" -NonInteractive -Src http://localhost:8081/repository/nuget-hosted")
+                    def packageText = bat(returnStdOut: true, script: "\"${tool 'NuGet-2022'}\" list -NonInteractive -Src http://localhost:8081/repository/nuget-hosted")
                     packageText = packageText.replaceAll("\r", "")
                     def packages = new ArrayList(packages.split("\n").toList())
                     packages.removeAll { line -> line.toLowerCase().startsWith("warning: ") }
