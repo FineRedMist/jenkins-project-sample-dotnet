@@ -122,7 +122,8 @@ pipeline {
 
                     def nupkgFiles = "**/*.nupkg"
                     findFiles(glob: nupkgFiles).each { nugetPkg ->
-                        def pkgName = nugetPkg.getBaseName()
+                        def pkgName = nugetPkg.getName()
+                        pkgName = pkgName.subString(0, pkgName.length() - 6) // Remove extension
                         if(packages.contains(pkgName)) {
                             error "The package ${pkgName} is already in the NuGet repository."
                         }
