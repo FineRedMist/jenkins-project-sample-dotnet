@@ -55,12 +55,12 @@ pipeline {
                     if(buildConfig.containsKey('Version')) {
                         def buildVersion = buildConfig['Version']
                         // Count the parts, and add any missing zeroes to get up to 3, then add the build version.
-                        def parts = buildVersion.split('\\.')
+                        def parts = new ArrayList(buildVersion.split('\\.'))
                         echo "Build version: ${buildVersion}"
                         echo "Build version parts: ${parts}, ${parts.getClass()}"
                         while(parts.size() < 3) {
                             echo "1, ${parts.size()}"
-                            parts.add("0")
+                            parts << "0"
                             echo "2, ${parts.size()}"
                         }
                         // The nuget version does not include the build number.
@@ -68,7 +68,7 @@ pipeline {
                         echo "Nuget version: ${nugetVersion}"
                         if(parts.size() < 4) {
                             echo "3, ${parts.size()}"
-                            parts.add(env.BUILD_NUMBER)
+                            parts << env.BUILD_NUMBER
                             echo "4, ${parts.size()}"
                         }
                         // This version is for the file and assembly versions.
@@ -124,7 +124,7 @@ pipeline {
                 script {
                     def packageText = bat(returnStdOut: true, script: "\"${tool 'NuGet-2022'}\" list \"${nugetPkg}\" -NonInteractive -Src http://localhost:8081/repository/nuget-hosted")
                     packageText = packageText.replaceAll("\r", "")
-                    packages = packages.split("\n")
+                    def packages = new ArrayList(packages.split("\n"))
                     packages.removeAll { line -> line.toLowerCase().startsWith("warning: ") }
                     packages = packages.collect { pkg -> pkg.replaceAll(' ', '.') }
 
