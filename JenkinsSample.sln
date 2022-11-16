@@ -9,11 +9,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{B9E0DD30
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BC3571C2-01E2-409A-8F4C-1F1A6B682343}"
 	ProjectSection(SolutionItems) = preProject
+		Configuration.json = Configuration.json
 		Jenkinsfile.groovy = Jenkinsfile.groovy
+		nuget.config = nuget.config
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample.Tests", "Tests\Sample.Tests\Sample.Tests.csproj", "{E7D64D5F-20DF-4CFE-8BE5-91BB3006FC22}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Tests", "Tests\Sample.Tests\Sample.Tests.csproj", "{E7D64D5F-20DF-4CFE-8BE5-91BB3006FC22}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
