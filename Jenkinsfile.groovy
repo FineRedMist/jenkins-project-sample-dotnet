@@ -55,19 +55,17 @@ pipeline {
                     if(buildConfig.containsKey('Version')) {
                         def buildVersion = buildConfig['Version']
                         // Count the parts, and add any missing zeroes to get up to 3, then add the build version.
-                        if(buildVersion) {
-                            def parts = buildVersion.split('\\.')
-                            while(parts.size() < 3) {
-                                parts.add('0')
-                            }
-                            // The nuget version does not include the build number.
-                            nugetVersion = parts.join('.')
-                            if(parts.size() < 4) {
-                                parts.add("${env.BUILD_NUMBER}")
-                            }
-                            // This version is for the file and assembly versions.
-                            version = parts.join('.')
+                        def parts = buildVersion.split('\\.')
+                        while(parts.size() < 3) {
+                            parts << '0'
                         }
+                        // The nuget version does not include the build number.
+                        nugetVersion = parts.join('.')
+                        if(parts.size() < 4) {
+                            parts << env.BUILD_NUMBER
+                        }
+                        // This version is for the file and assembly versions.
+                        version = parts.join('.')
                     }
                 }
             }
