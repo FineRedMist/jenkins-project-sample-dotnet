@@ -57,10 +57,10 @@ pipeline {
                         // Count the parts, and add any missing zeroes to get up to 3, then add the build version.
                         def parts = buildVersion.split('\\.')
                         echo "Build version: ${buildVersion}"
-                        echo "Build version parts: ${parts}"
+                        echo "Build version parts: ${parts}, ${parts.getClass()}"
                         while(parts.size() < 3) {
                             echo "1, ${parts.size()}"
-                            parts << "0"
+                            parts.add("0")
                             echo "2, ${parts.size()}"
                         }
                         // The nuget version does not include the build number.
@@ -68,7 +68,7 @@ pipeline {
                         echo "Nuget version: ${nugetVersion}"
                         if(parts.size() < 4) {
                             echo "3, ${parts.size()}"
-                            parts << env.BUILD_NUMBER
+                            parts.add(env.BUILD_NUMBER)
                             echo "4, ${parts.size()}"
                         }
                         // This version is for the file and assembly versions.
