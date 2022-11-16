@@ -22,14 +22,10 @@ pipeline {
     stages {
         stage('Clean Old NuGet Packages') {
             steps {
-                script {
-                    findFiles(glob: "**/*.nupkg").each { nugetPkg ->
-                        nugetPkg.delete()
-                    }
-                    findFiles(glob: "**/*.snupkg").each { snugetPkg ->
-                        snugetPkg.delete()
-                    }
-                }
+                bat """
+                    del /s /q *.nupkg *.snupkg
+                    exit /b 0
+                """
             }
         }
         stage('Find Solution') {
