@@ -1,6 +1,8 @@
 
 // The solution file we found to build. Ideally only one per GitHub repository.
 def slnFile = ""
+def version = "1.0.0.${env.BUILD_NUMBER}"
+def nugetVersion = version
 
 pipeline {
     // Run on any available Jenkins agent.
@@ -45,10 +47,29 @@ pipeline {
                     """
             }
         }
+        stage('Configure Build Settings') {
+            when { expression { return fileExists ('Configuration.json') } }
+            def buildConfig = readJSON file: 'Configuration.json'
+            def buildVersion = buildConfig.find( it.key == 'Version')
+            // Count the parts, and add any missing zeroes to get up to 3, then add the build version.
+            if(buildVersion) {
+                def parts = buildVersion.split('\\.')
+                while(parts.size() < 3) {
+                    parts.add('0')
+                }
+                // The nuget version does not include the build number.
+                nugetVersion = parts.join('.')
+                if(parts.size() < 4) {
+                    parts.add("${env.BUILD_NUMBER}")
+                }
+                // This version is for the file and assembly versions.
+                version = parts.join('.')
+            }
+        }
         stage('Build Solution') {
             steps {
                 bat """
-                    \"${tool 'MSBuild-2022'}\" ${slnFile} /p:Configuration=Release /p:Platform=\"Any CPU\" /p:ProductVersion=1.0.${env.BUILD_NUMBER}.0
+                    \"${tool 'MSBuild-2022'}\" ${slnFile} /p:Configuration=Release /p:Platform=\"Any CPU\" /p:PackageVersion=${nugetVersion} /p:Version=${version}
                     """
             }
         }
@@ -80,6 +101,26 @@ pipeline {
             steps {
                 script {
                     mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
+                }
+            }
+        }
+        stage('Preexisting NuGet Package Check') {
+            steps {
+                // Find all the nuget packages to publish.
+                script {
+                    def packageText = bat(returnStdOut: true, script: "\"${tool 'NuGet-2022'}\" list \"${nugetPkg}\" -NonInteractive -Src http://localhost:8081/repository/nuget-hosted")
+                    packageText = packageText.replaceAll("\r", "")
+                    packages = packages.split("\n")
+                    packages.removeAll { it.toLowerCase().startsWith("warning: ") }
+                    packages packages*.replaceAll(' ', '.')
+
+                    def nupkgFiles = "**/*.nupkg"
+                    findFiles(glob: nupkgFiles).each { nugetPkg ->
+                        def pkgName = nugetPkg.getBaseName()
+                        if(packages.contains(pkgName)) {
+                            error "The package ${pkgName} is already in the NuGet repository."
+                        }
+                    }
                 }
             }
         }
