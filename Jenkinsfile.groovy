@@ -116,7 +116,7 @@ pipeline {
                 script {
                     def packageText = bat(returnStdout: true, script: "\"${tool 'NuGet-2022'}\" list -NonInteractive -Source http://localhost:8081/repository/nuget-hosted")
                     packageText = packageText.replaceAll("\r", "")
-                    def packages = new ArrayList(packages.split("\n").toList())
+                    def packages = new ArrayList(packageText.split("\n").toList())
                     packages.removeAll { line -> line.toLowerCase().startsWith("warning: ") }
                     packages = packages.collect { pkg -> pkg.replaceAll(' ', '.') }
 
