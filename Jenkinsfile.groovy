@@ -118,7 +118,7 @@ pipeline {
                     packageText = packageText.replaceAll("\r", "")
                     packages = packages.split("\n")
                     packages.removeAll { it.toLowerCase().startsWith("warning: ") }
-                    packages packages*.replaceAll(' ', '.')
+                    packages = packages*.replaceAll(' ', '.')
 
                     def nupkgFiles = "**/*.nupkg"
                     findFiles(glob: nupkgFiles).each { nugetPkg ->
