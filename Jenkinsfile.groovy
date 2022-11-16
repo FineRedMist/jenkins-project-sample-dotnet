@@ -20,6 +20,17 @@ pipeline {
         pollSCM 'H * * * *'
     }
     stages {
+        stage('Clean Old NuGet Packages') {
+            steps {
+                script {
+                    findFiles(glob: "**/*.nupkg").each { nugetPkg ->
+                        nugetPkg.delete()
+                    }
+                    findFiles(glob: "**/*.snupkg").each { snugetPkg ->
+                        snugetPkg.delete()
+                    }
+            }
+        }
         stage('Find Solution') {
             steps {
                 script {
@@ -75,7 +86,7 @@ pipeline {
                 echo "Setting NuGet Package version to: ${nugetVersion}"
                 echo "Setting File and Assembly version to ${version}"
                 bat """
-                    \"${tool 'MSBuild-2022'}\" ${slnFile} /t:Clean,Build /p:Configuration=Release /p:Platform=\"Any CPU\" /p:PackageVersion=${nugetVersion} /p:Version=${version}
+                    \"${tool 'MSBuild-2022'}\" ${slnFile} /p:Configuration=Release /p:Platform=\"Any CPU\" /p:PackageVersion=${nugetVersion} /p:Version=${version}
                     """
             }
         }
