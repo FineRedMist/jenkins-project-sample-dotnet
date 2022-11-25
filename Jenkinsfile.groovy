@@ -60,10 +60,14 @@ pipeline {
         }
         stage ("Run Tests") {
             steps {
+                bat """
+                    dotnet test --nologo --results-directory TestResults --logger trx --collect:"Code Coverage"
+                    """
                 script {
-                    bat """
-                        dotnet test --nologo --results-directory TestResults -logger trx --collect:"XPlat Code Coverage"
-                        """
+                    def testResults = "TestResults/**"
+                    findFiles(glob: testResults).each { foundFile ->
+                        echo "Found file: ${foundFile}"
+                    }
                 }
             }
         }
@@ -90,6 +94,8 @@ pipeline {
                         pkgName = pkgName.substring(0, pkgName.length() - 6) // Remove extension
                         if(packages.contains(pkgName)) {
                             error "The package ${pkgName} is already in the NuGet repository."
+                        } else {
+                            echo "The package ${pkgName} is not in the NuGet repository."
                         }
                     }
                 }
