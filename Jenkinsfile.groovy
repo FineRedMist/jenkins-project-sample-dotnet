@@ -54,14 +54,13 @@ pipeline {
             steps {
                 echo "Setting NuGet Package version to: ${nugetVersion}"
                 echo "Setting File and Assembly version to ${version}"
-                bat "dotnet build --nologo -c Release -p:PackageVersion=${nugetVersion} -p:Version=${version}"
-                bat "dotnet publish"
+                bat "dotnet build --nologo -c Release -p:PackageVersion=${nugetVersion} -p:Version=${version} --no-restore" 
             }
         }
         stage ("Run Tests") {
             steps {
                 bat """
-                    dotnet test --nologo -c Release --results-directory TestResults --logger trx --collect:"XPlat code coverage"
+                    dotnet test --nologo -c Release --results-directory TestResults --logger trx --collect:"XPlat code coverage" --no-restore --no-build
                     """
                 script {
                     def testResults = "TestResults/**"
