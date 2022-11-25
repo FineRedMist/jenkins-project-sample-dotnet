@@ -1,6 +1,5 @@
 
 // The solution file we found to build. Ideally only one per GitHub repository.
-def slnFile = ""
 def version = "1.0.0.${env.BUILD_NUMBER}"
 def nugetVersion = version
 
@@ -20,39 +19,11 @@ pipeline {
         pollSCM 'H * * * *'
     }
     stages {
-        stage('Clean Old NuGet Packages') {
-            steps {
-                bat """
-                    del /s /q *.nupkg *.snupkg
-                    exit /b 0
-                """
-            }
-        }
-        stage('Find Solution') {
-            steps {
-                script {
-                    // Search the repository for a file ending in .sln.
-                    findFiles(glob: '**').each {
-                        def path = it.toString();
-                        if(path.toLowerCase().endsWith('.sln')) {
-                            slnFile = path;
-                        }
-                    }
-                    if(slnFile.length() == 0) {
-                        throw new Exception('No solution files were found to build in the root of the git repository.')
-                    }
-                    echo "Found solution: ${slnFile}"
-                }
-            }
-        }
         stage('Restore NuGet For Solution') {
             steps {
                 // The command to restore includes:
-                //  'NoCache' to avoid a shared cache--if multiple projects are running NuGet restore, they can collide.
-                //  'NonInteractive' ensures no dialogs appear which can block builds from continuing.
-                bat """
-                    \"${tool 'NuGet-2022'}\" restore ${slnFile} -NoCache -NonInteractive
-                    """
+                //  '--no-cache' to avoid a shared cache--if multiple projects are running NuGet restore, they can collide.
+                bat "dotnet restore --nologo --no-cache"
             }
         }
         stage('Configure Build Settings') {
@@ -82,40 +53,42 @@ pipeline {
             steps {
                 echo "Setting NuGet Package version to: ${nugetVersion}"
                 echo "Setting File and Assembly version to ${version}"
-                bat """
-                    \"${tool 'MSBuild-2022'}\" ${slnFile} /p:Configuration=Release /p:Platform=\"Any CPU\" /p:PackageVersion=${nugetVersion} /p:Version=${version}
-                    """
+                bat "dotnet build --nologo -c Release -p:PackageVersion=${nugetVersion} -p:Version=${version} --no-restore" 
             }
         }
         stage ("Run Tests") {
             steps {
+                // MSTest projects automatically include coverlet that can generate cobertura formatted coverage information.
+                bat """
+                    dotnet test --nologo -c Release --results-directory TestResults --logger trx --collect:"XPlat code coverage" --no-restore --no-build
+                    """
                 script {
-                    // Clean up any old test output from before so it doesn't contaminate this run.
-                    bat "IF EXIST TestResults rmdir /s /q TestResults"
-
-                    // The collection of tests to the work to do
-                    def tests = [:]
-
-                    // Find all the Test dlls that were built.
-                    def testAntPath = "**/bin/**/*.Tests.dll"
-                    findFiles(glob: testAntPath).each { f ->
-                        String fullName = f
-
-                        // Add a command to the map to run that test.
-                        tests["${fullName}"] = {
-                            bat "\"${tool 'VSTest-2022'}\" /platform:x64 \"${fullName}\" /logger:trx /inIsolation /ResultsDirectory:TestResults"
-                        }
+                    def testResults = "TestResults/**"
+                    findFiles(glob: testResults).each { foundFile ->
+                        echo "Found file: ${foundFile}"
                     }
-                    // Runs the tests in parallel
-                    parallel tests
                 }
             }
         }
-        stage ("Convert Test Output") {
+        stage ("Publish Test Output") {
             steps {
-                script {
-                    mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
-                }
+                mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
+            }
+        }
+        stage ("Publish Code Coverage") {
+            steps {
+                publishCoverage(adapters: [
+                  coberturaAdapter(path: "TestResults/**/In/**/*.cobertura.xml", thresholds: [
+                    [thresholdTarget: 'Group', unhealthyThreshold: 100.0],
+                    [thresholdTarget: 'Package', unhealthyThreshold: 100.0],
+                    [thresholdTarget: 'File', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
+                    [thresholdTarget: 'Class', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
+                    [thresholdTarget: 'Method', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
+                    [thresholdTarget: 'Instruction', unhealthyThreshold: 0.0, unstableThreshold: 0.0],
+                    [thresholdTarget: 'Line', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
+                    [thresholdTarget: 'Conditional', unhealthyThreshold: 0.0, unstableThreshold: 0.0],
+                  ])
+                ], failNoReports: true, failUnhealthy: true, calculateDiffForChangeRequests: true)
             }
         }
         stage('Preexisting NuGet Package Check') {
@@ -134,6 +107,8 @@ pipeline {
                         pkgName = pkgName.substring(0, pkgName.length() - 6) // Remove extension
                         if(packages.contains(pkgName)) {
                             error "The package ${pkgName} is already in the NuGet repository."
+                        } else {
+                            echo "The package ${nugetPkg} is not in the NuGet repository."
                         }
                     }
                 }
@@ -155,7 +130,7 @@ pipeline {
                         def nupkgFiles = "**/*.nupkg"
                         findFiles(glob: nupkgFiles).each { nugetPkg ->
                             bat """
-                                \"${tool 'NuGet-2022'}\" push \"${nugetPkg}\" -NonInteractive -APIKey ${APIKey} -Src http://localhost:8081/repository/nuget-hosted
+                                dotnet nuget push \"${nugetPkg}\" --api-key ${APIKey} --source http://localhost:8081/repository/nuget-hosted
                                 """
                         }
                     }
