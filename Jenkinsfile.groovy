@@ -86,9 +86,9 @@ pipeline {
                     [thresholdTarget: 'Method', unhealthyThreshold: 85.0],
                     [thresholdTarget: 'Instruction', unhealthyThreshold: 85.0],
                     [thresholdTarget: 'Line', unhealthyThreshold: 85.0],
-                    [thresholdTarget: 'Conditional', unhealthyThreshold: 85.0]
+                    [thresholdTarget: 'Conditional', unhealthyThreshold: 85.0],
                   ])
-                ])
+                ], failNoReports: true, failUnhealthy: true, calculateDiffForChangeRequests: true)
             }
         }
         stage('Preexisting NuGet Package Check') {
