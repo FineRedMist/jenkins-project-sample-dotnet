@@ -51,7 +51,7 @@ pipeline {
                 //  'NoCache' to avoid a shared cache--if multiple projects are running NuGet restore, they can collide.
                 //  'NonInteractive' ensures no dialogs appear which can block builds from continuing.
                 bat """
-                    \"${tool 'NuGet-2022'}\" restore ${slnFile} -NoCache -NonInteractive
+                    dotnet restore --no-cache
                     """
             }
         }
