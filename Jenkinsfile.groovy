@@ -1,6 +1,5 @@
 
 // The solution file we found to build. Ideally only one per GitHub repository.
-def slnFile = ""
 def version = "1.0.0.${env.BUILD_NUMBER}"
 def nugetVersion = version
 
@@ -20,39 +19,12 @@ pipeline {
         pollSCM 'H * * * *'
     }
     stages {
-        stage('Clean Old NuGet Packages') {
-            steps {
-                bat """
-                    del /s /q *.nupkg *.snupkg
-                    exit /b 0
-                """
-            }
-        }
-        stage('Find Solution') {
-            steps {
-                script {
-                    // Search the repository for a file ending in .sln.
-                    findFiles(glob: '**').each {
-                        def path = it.toString();
-                        if(path.toLowerCase().endsWith('.sln')) {
-                            slnFile = path;
-                        }
-                    }
-                    if(slnFile.length() == 0) {
-                        throw new Exception('No solution files were found to build in the root of the git repository.')
-                    }
-                    echo "Found solution: ${slnFile}"
-                }
-            }
-        }
         stage('Restore NuGet For Solution') {
             steps {
                 // The command to restore includes:
                 //  'NoCache' to avoid a shared cache--if multiple projects are running NuGet restore, they can collide.
                 //  'NonInteractive' ensures no dialogs appear which can block builds from continuing.
-                bat """
-                    dotnet restore --nologo --no-cache 
-                    """
+                bat "dotnet restore --nologo --no-cache"
             }
         }
         stage('Configure Build Settings') {
@@ -82,32 +54,16 @@ pipeline {
             steps {
                 echo "Setting NuGet Package version to: ${nugetVersion}"
                 echo "Setting File and Assembly version to ${version}"
-                bat """
-                    dotnet build --nologo  -c Release -p:PackageVersion=${nugetVersion} -p:Version=${version}
-                    """
+                bat "dotnet build --nologo -c Release -p:PackageVersion=${nugetVersion} -p:Version=${version}"
+                bat "dotnet publish"
             }
         }
         stage ("Run Tests") {
             steps {
                 script {
-                    // Clean up any old test output from before so it doesn't contaminate this run.
-                    bat "IF EXIST TestResults rmdir /s /q TestResults"
-
-                    // The collection of tests to the work to do
-                    def tests = [:]
-
-                    // Find all the Test dlls that were built.
-                    def testAntPath = "**/bin/**/*.Tests.dll"
-                    findFiles(glob: testAntPath).each { f ->
-                        String fullName = f
-
-                        // Add a command to the map to run that test.
-                        tests["${fullName}"] = {
-                            bat "\"${tool 'VSTest-2022'}\" /platform:x64 \"${fullName}\" /logger:trx /inIsolation /ResultsDirectory:TestResults"
-                        }
-                    }
-                    // Runs the tests in parallel
-                    parallel tests
+                    bat """
+                        dotnet test --nologo --results-directory TestResults -logger trx --collect:"XPlat Code Coverage"
+                        """
                 }
             }
         }
