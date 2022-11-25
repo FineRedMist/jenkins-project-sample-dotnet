@@ -71,10 +71,13 @@ pipeline {
                 }
             }
         }
-        stage ("Convert Test Output") {
+        stage ("Publish MSTest Output") {
             steps {
                 mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
-
+            }
+        }
+        stage ("Publish Code Coverage") {
+            steps {
                 publishCoverage(adapters: [
                   coberturaAdapter(path: "TestResults/**/In/**/*.cobertura.xml", thresholds: [
                     [thresholdTarget: 'Group', unhealthyThreshold: 100.0],
