@@ -51,7 +51,7 @@ pipeline {
                 //  'NoCache' to avoid a shared cache--if multiple projects are running NuGet restore, they can collide.
                 //  'NonInteractive' ensures no dialogs appear which can block builds from continuing.
                 bat """
-                    dotnet restore --no-cache
+                    dotnet restore --nologo --no-cache 
                     """
             }
         }
@@ -83,7 +83,7 @@ pipeline {
                 echo "Setting NuGet Package version to: ${nugetVersion}"
                 echo "Setting File and Assembly version to ${version}"
                 bat """
-                    \"${tool 'MSBuild-2022'}\" ${slnFile} /p:Configuration=Release /p:Platform=\"Any CPU\" /p:PackageVersion=${nugetVersion} /p:Version=${version}
+                    dotnet build --nologo  -c Release -p:PackageVersion=${nugetVersion} -p:Version=${version}
                     """
             }
         }
