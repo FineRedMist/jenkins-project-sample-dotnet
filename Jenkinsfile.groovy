@@ -61,7 +61,7 @@ pipeline {
         stage ("Run Tests") {
             steps {
                 bat """
-                    dotnet test --nologo --results-directory TestResults --logger trx --collect:"Code Coverage"
+                    dotnet test --nologo --results-directory TestResults --logger trx --collect:"XPlat code coverage"
                     """
                 script {
                     def testResults = "TestResults/**"
@@ -95,7 +95,7 @@ pipeline {
                         if(packages.contains(pkgName)) {
                             error "The package ${pkgName} is already in the NuGet repository."
                         } else {
-                            echo "The package ${pkgName} is not in the NuGet repository."
+                            echo "The package ${nugetPkg} is not in the NuGet repository."
                         }
                     }
                 }
