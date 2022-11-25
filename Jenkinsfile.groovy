@@ -22,8 +22,7 @@ pipeline {
         stage('Restore NuGet For Solution') {
             steps {
                 // The command to restore includes:
-                //  'NoCache' to avoid a shared cache--if multiple projects are running NuGet restore, they can collide.
-                //  'NonInteractive' ensures no dialogs appear which can block builds from continuing.
+                //  '--no-cache' to avoid a shared cache--if multiple projects are running NuGet restore, they can collide.
                 bat "dotnet restore --nologo --no-cache"
             }
         }
@@ -59,6 +58,7 @@ pipeline {
         }
         stage ("Run Tests") {
             steps {
+                // MSTest projects automatically include coverlet that can generate cobertura formatted coverage information.
                 bat """
                     dotnet test --nologo -c Release --results-directory TestResults --logger trx --collect:"XPlat code coverage" --no-restore --no-build
                     """
@@ -70,7 +70,7 @@ pipeline {
                 }
             }
         }
-        stage ("Publish MSTest Output") {
+        stage ("Publish Test Output") {
             steps {
                 mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
             }
@@ -130,7 +130,7 @@ pipeline {
                         def nupkgFiles = "**/*.nupkg"
                         findFiles(glob: nupkgFiles).each { nugetPkg ->
                             bat """
-                                \"${tool 'NuGet-2022'}\" push \"${nugetPkg}\" -NonInteractive -APIKey ${APIKey} -Src http://localhost:8081/repository/nuget-hosted
+                                dotnet nuget push \"${nugetPkg}\" --api-key ${APIKey} --source http://localhost:8081/repository/nuget-hosted
                                 """
                         }
                     }
@@ -139,9 +139,6 @@ pipeline {
         }
     }
     post {
-        always {
-            archiveArtifacts artifacts: 'TestResults/**/In/**/*.cobertura.xml', allowEmptyArchive: true
-        }
         cleanup {
             cleanWs(deleteDirs: true, disableDeferredWipeout: true, notFailBuild: true)
         }
