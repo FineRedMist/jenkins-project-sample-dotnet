@@ -61,7 +61,7 @@ pipeline {
         stage ("Run Tests") {
             steps {
                 bat """
-                    dotnet test --nologo --results-directory TestResults --logger trx --collect:"XPlat code coverage"
+                    dotnet test --nologo -c Release --results-directory TestResults --logger trx --collect:"XPlat code coverage"
                     """
                 script {
                     def testResults = "TestResults/**"
@@ -73,9 +73,20 @@ pipeline {
         }
         stage ("Convert Test Output") {
             steps {
-                script {
-                    mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
-                }
+                mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
+
+                publishCoverage(adapters: [
+                  coberturaAdapter(path: "TestResults/**/In/**/*.cobertura.xml", thresholds: [
+                    [thresholdTarget: 'Group', unhealthyThreshold: 100.0],
+                    [thresholdTarget: 'Package', unhealthyThreshold: 100.0],
+                    [thresholdTarget: 'File', unhealthyThreshold: 85.0],
+                    [thresholdTarget: 'Class', unhealthyThreshold: 85.0],
+                    [thresholdTarget: 'Method', unhealthyThreshold: 85.0],
+                    [thresholdTarget: 'Instruction', unhealthyThreshold: 85.0],
+                    [thresholdTarget: 'Line', unhealthyThreshold: 85.0],
+                    [thresholdTarget: 'Conditional', unhealthyThreshold: 85.0]
+                  ])
+                ])
             }
         }
         stage('Preexisting NuGet Package Check') {
