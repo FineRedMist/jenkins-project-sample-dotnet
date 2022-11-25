@@ -140,6 +140,9 @@ pipeline {
         }
     }
     post {
+        always {
+            archiveArtifacts artifacts: 'TestResults/**/In/*.cobertura.xml', allowEmptyArchive: true
+        }
         cleanup {
             cleanWs(deleteDirs: true, disableDeferredWipeout: true, notFailBuild: true)
         }
