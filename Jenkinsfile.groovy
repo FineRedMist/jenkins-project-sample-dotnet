@@ -84,9 +84,9 @@ pipeline {
                     [thresholdTarget: 'File', unhealthyThreshold: 85.0],
                     [thresholdTarget: 'Class', unhealthyThreshold: 85.0],
                     [thresholdTarget: 'Method', unhealthyThreshold: 85.0],
-                    [thresholdTarget: 'Instruction', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
+                    [thresholdTarget: 'Instruction', unhealthyThreshold: 30.0, unstableThreshold: 50.0],
                     [thresholdTarget: 'Line', unhealthyThreshold: 85.0],
-                    [thresholdTarget: 'Conditional', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
+                    [thresholdTarget: 'Conditional', unhealthyThreshold: 30.0, unstableThreshold: 50.0],
                   ])
                 ], failNoReports: true, failUnhealthy: true, calculateDiffForChangeRequests: true)
             }
