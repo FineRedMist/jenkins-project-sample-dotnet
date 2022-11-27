@@ -56,35 +56,37 @@ pipeline {
         }
         stage ("Run Tests") {
             parallel {
-                stages {
-                    stage("Run Test Libraries")
-                    {
-                        steps {
-                            // MSTest projects automatically include coverlet that can generate cobertura formatted coverage information.
-                            bat """
-                                dotnet test --nologo -c Release --results-directory TestResults --logger trx --collect:"XPlat code coverage" --no-restore --no-build
-                                """
+                stage("Test Suite") {
+                    stages {
+                        stage("Run Test Libraries")
+                        {
+                            steps {
+                                // MSTest projects automatically include coverlet that can generate cobertura formatted coverage information.
+                                bat """
+                                    dotnet test --nologo -c Release --results-directory TestResults --logger trx --collect:"XPlat code coverage" --no-restore --no-build
+                                    """
+                            }
                         }
-                    }
-                    stage ("Publish Test Output") {
-                        steps {
-                            mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
+                        stage ("Publish Test Output") {
+                            steps {
+                                mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
+                            }
                         }
-                    }
-                    stage ("Publish Code Coverage") {
-                        steps {
-                            publishCoverage(adapters: [
-                              coberturaAdapter(path: "TestResults/**/In/**/*.cobertura.xml", thresholds: [
-                                [thresholdTarget: 'Group', unhealthyThreshold: 100.0],
-                                [thresholdTarget: 'Package', unhealthyThreshold: 100.0],
-                                [thresholdTarget: 'File', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
-                                [thresholdTarget: 'Class', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
-                                [thresholdTarget: 'Method', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
-                                [thresholdTarget: 'Instruction', unhealthyThreshold: 0.0, unstableThreshold: 0.0],
-                                [thresholdTarget: 'Line', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
-                                [thresholdTarget: 'Conditional', unhealthyThreshold: 0.0, unstableThreshold: 0.0],
-                              ])
-                            ], failNoReports: true, failUnhealthy: true, calculateDiffForChangeRequests: true)
+                        stage ("Publish Code Coverage") {
+                            steps {
+                                publishCoverage(adapters: [
+                                  coberturaAdapter(path: "TestResults/**/In/**/*.cobertura.xml", thresholds: [
+                                    [thresholdTarget: 'Group', unhealthyThreshold: 100.0],
+                                    [thresholdTarget: 'Package', unhealthyThreshold: 100.0],
+                                    [thresholdTarget: 'File', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
+                                    [thresholdTarget: 'Class', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
+                                    [thresholdTarget: 'Method', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
+                                    [thresholdTarget: 'Instruction', unhealthyThreshold: 0.0, unstableThreshold: 0.0],
+                                    [thresholdTarget: 'Line', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
+                                    [thresholdTarget: 'Conditional', unhealthyThreshold: 0.0, unstableThreshold: 0.0],
+                                  ])
+                                ], failNoReports: true, failUnhealthy: true, calculateDiffForChangeRequests: true)
+                            }
                         }
                     }
                 }
