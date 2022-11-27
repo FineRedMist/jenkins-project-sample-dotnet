@@ -1,5 +1,4 @@
 
-// The solution file we found to build. Ideally only one per GitHub repository.
 def version = "1.0.0.${env.BUILD_NUMBER}"
 def nugetVersion = version
 
@@ -21,7 +20,6 @@ pipeline {
     stages {
         stage('Restore NuGet For Solution') {
             steps {
-                // The command to restore includes:
                 //  '--no-cache' to avoid a shared cache--if multiple projects are running NuGet restore, they can collide.
                 bat "dotnet restore --nologo --no-cache"
             }
@@ -62,12 +60,6 @@ pipeline {
                 bat """
                     dotnet test --nologo -c Release --results-directory TestResults --logger trx --collect:"XPlat code coverage" --no-restore --no-build
                     """
-                script {
-                    def testResults = "TestResults/**"
-                    findFiles(glob: testResults).each { foundFile ->
-                        echo "Found file: ${foundFile}"
-                    }
-                }
             }
         }
         stage ("Publish Test Output") {
