@@ -361,3 +361,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# dotnet tools manifest
+.config/
+
+# security scan results
+sast-report.sarif
