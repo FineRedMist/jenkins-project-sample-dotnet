@@ -12,3 +12,4 @@ The corresponding blog posts (so far) are available at:
  * [CI/CD Publishing NuGet Packages](https://www.oneoddsock.com/blog/2022/11/16/ci-cd-publishing-nuget-packages/)
  * [CI/CD Revisions!](https://www.oneoddsock.com/blog/2022/11/26/ci-cd-revisions/)
  * [CI/CD Code Coverage](https://www.oneoddsock.com/blog/2022/11/26/ci-cd-code-coverage/)
+ * [CI/CD Static Security Scanning](https://www.oneoddsock.com/blog/2022/11/26/ci-cd-security-scanning/)
