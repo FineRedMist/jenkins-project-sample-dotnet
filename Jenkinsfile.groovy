@@ -154,7 +154,7 @@ pipeline {
     }
     post {
         always {
-            archiveArtifacts: artifacts: "sast-report.sarif", allowEmptyArchive: true, onlyIfSuccessful: false
+            archiveArtifacts(artifacts: "sast-report.sarif", allowEmptyArchive: true, onlyIfSuccessful: false)
         }
         cleanup {
             cleanWs(deleteDirs: true, disableDeferredWipeout: true, notFailBuild: true)
