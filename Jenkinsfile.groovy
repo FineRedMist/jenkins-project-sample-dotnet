@@ -83,6 +83,28 @@ pipeline {
                 ], failNoReports: true, failUnhealthy: true, calculateDiffForChangeRequests: true)
             }
         }
+        stage ("Run Security Scan") {
+            steps {
+                bat "dotnet new tool-manifest"
+                bat "dotnet tool install --local security-scan --no-cache"
+                script {
+                    def slnFile = ""
+                    // Search the repository for a file ending in .sln.
+                    findFiles(glob: '**').each {
+                        def path = it.toString();
+                        if(path.toLowerCase().endsWith('.sln')) {
+                            slnFile = path;
+                        }
+                    }
+                    if(slnFile.length() == 0) {
+                        throw new Exception('No solution files were found to build in the root of the git repository.')
+                    }
+                    bat """
+                    dotnet security-scan ${slnFile} --excl-proj=**/*Test*/** -n --cwe --export=sast-report.sarif
+                    """
+                }
+            }
+        }
         stage('Preexisting NuGet Package Check') {
             steps {
                 // Find all the nuget packages to publish.
@@ -131,6 +153,9 @@ pipeline {
         }
     }
     post {
+        always {
+            archiveArtifacts: artifacts: "sast-report.sarif", allowEmptyArchive: true, onlyIfSuccessful: false
+        }
         cleanup {
             cleanWs(deleteDirs: true, disableDeferredWipeout: true, notFailBuild: true)
         }
