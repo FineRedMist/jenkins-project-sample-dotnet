@@ -55,7 +55,6 @@ pipeline {
             }
         }
         stage ("Run Tests") {
-        {
             steps {
                 // MSTest projects automatically include coverlet that can generate cobertura formatted coverage information.
                 bat """
