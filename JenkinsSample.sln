@@ -9,6 +9,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{B9E0DD30
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BC3571C2-01E2-409A-8F4C-1F1A6B682343}"
 	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
 		Configuration.json = Configuration.json
 		Jenkinsfile.groovy = Jenkinsfile.groovy
 		nuget.config = nuget.config
