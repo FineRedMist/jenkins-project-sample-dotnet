@@ -55,83 +55,75 @@ pipeline {
             }
         }
         stage ("Run Tests") {
-            parallel {
-                stage("Test Suite") {
-                    stages {
-                        stage("Run Test Libraries")
-                        {
-                            steps {
-                                // MSTest projects automatically include coverlet that can generate cobertura formatted coverage information.
-                                bat """
-                                    dotnet test --nologo -c Release --results-directory TestResults --logger trx --collect:"XPlat code coverage" --no-restore --no-build
-                                    """
-                            }
-                        }
-                        stage ("Publish Test Output") {
-                            steps {
-                                mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
-                            }
-                        }
-                        stage ("Publish Code Coverage") {
-                            steps {
-                                publishCoverage(adapters: [
-                                  coberturaAdapter(path: "TestResults/**/In/**/*.cobertura.xml", thresholds: [
-                                    [thresholdTarget: 'Group', unhealthyThreshold: 100.0],
-                                    [thresholdTarget: 'Package', unhealthyThreshold: 100.0],
-                                    [thresholdTarget: 'File', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
-                                    [thresholdTarget: 'Class', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
-                                    [thresholdTarget: 'Method', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
-                                    [thresholdTarget: 'Instruction', unhealthyThreshold: 0.0, unstableThreshold: 0.0],
-                                    [thresholdTarget: 'Line', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
-                                    [thresholdTarget: 'Conditional', unhealthyThreshold: 0.0, unstableThreshold: 0.0],
-                                  ])
-                                ], failNoReports: true, failUnhealthy: true, calculateDiffForChangeRequests: true)
-                            }
-                        }
-                    }
-                }
-                stage ("Run Security Scan") {
-                    steps {
-                        bat "dotnet new tool-manifest"
-                        bat "dotnet tool install --local security-scan --no-cache"
-                        script {
-                            def slnFile = ""
-                            // Search the repository for a file ending in .sln.
-                            findFiles(glob: '**').each {
-                                def path = it.toString();
-                                if(path.toLowerCase().endsWith('.sln')) {
-                                    slnFile = path;
-                                }
-                            }
-                            if(slnFile.length() == 0) {
-                                throw new Exception('No solution files were found to build in the root of the git repository.')
-                            }
-                            bat """
-                            dotnet security-scan ${slnFile} --excl-proj=**/*Test*/** -n --cwe --export=sast-report.sarif
-                            """
+        {
+            steps {
+                // MSTest projects automatically include coverlet that can generate cobertura formatted coverage information.
+                bat """
+                    dotnet test --nologo -c Release --results-directory TestResults --logger trx --collect:"XPlat code coverage" --no-restore --no-build
+                    """
+            }
+        }
+        stage ("Publish Test Output") {
+            steps {
+                mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
+            }
+        }
+        stage ("Publish Code Coverage") {
+            steps {
+                publishCoverage(adapters: [
+                    coberturaAdapter(path: "TestResults/**/In/**/*.cobertura.xml", thresholds: [
+                    [thresholdTarget: 'Group', unhealthyThreshold: 100.0],
+                    [thresholdTarget: 'Package', unhealthyThreshold: 100.0],
+                    [thresholdTarget: 'File', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
+                    [thresholdTarget: 'Class', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
+                    [thresholdTarget: 'Method', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
+                    [thresholdTarget: 'Instruction', unhealthyThreshold: 0.0, unstableThreshold: 0.0],
+                    [thresholdTarget: 'Line', unhealthyThreshold: 50.0, unstableThreshold: 85.0],
+                    [thresholdTarget: 'Conditional', unhealthyThreshold: 0.0, unstableThreshold: 0.0],
+                    ])
+                ], failNoReports: true, failUnhealthy: true, calculateDiffForChangeRequests: true)
+            }
+        }
+        stage ("Run Security Scan") {
+            steps {
+                bat "dotnet new tool-manifest"
+                bat "dotnet tool install --local security-scan --no-cache"
+                script {
+                    def slnFile = ""
+                    // Search the repository for a file ending in .sln.
+                    findFiles(glob: '**').each {
+                        def path = it.toString();
+                        if(path.toLowerCase().endsWith('.sln')) {
+                            slnFile = path;
                         }
                     }
+                    if(slnFile.length() == 0) {
+                        throw new Exception('No solution files were found to build in the root of the git repository.')
+                    }
+                    bat """
+                    dotnet security-scan ${slnFile} --excl-proj=**/*Test*/** -n --cwe --export=sast-report.sarif
+                    """
                 }
-                stage('Preexisting NuGet Package Check') {
-                    steps {
-                        // Find all the nuget packages to publish.
-                        script {
-                            def packageText = bat(returnStdout: true, script: "\"${tool 'NuGet-2022'}\" list -NonInteractive -Source http://localhost:8081/repository/nuget-hosted")
-                            packageText = packageText.replaceAll("\r", "")
-                            def packages = new ArrayList(packageText.split("\n").toList())
-                            packages.removeAll { line -> line.toLowerCase().startsWith("warning: ") }
-                            packages = packages.collect { pkg -> pkg.replaceAll(' ', '.') }
+            }
+        }
+        stage('Preexisting NuGet Package Check') {
+            steps {
+                // Find all the nuget packages to publish.
+                script {
+                    def packageText = bat(returnStdout: true, script: "\"${tool 'NuGet-2022'}\" list -NonInteractive -Source http://localhost:8081/repository/nuget-hosted")
+                    packageText = packageText.replaceAll("\r", "")
+                    def packages = new ArrayList(packageText.split("\n").toList())
+                    packages.removeAll { line -> line.toLowerCase().startsWith("warning: ") }
+                    packages = packages.collect { pkg -> pkg.replaceAll(' ', '.') }
 
-                            def nupkgFiles = "**/*.nupkg"
-                            findFiles(glob: nupkgFiles).each { nugetPkg ->
-                                def pkgName = nugetPkg.getName()
-                                pkgName = pkgName.substring(0, pkgName.length() - 6) // Remove extension
-                                if(packages.contains(pkgName)) {
-                                    error "The package ${pkgName} is already in the NuGet repository."
-                                } else {
-                                    echo "The package ${nugetPkg} is not in the NuGet repository."
-                                }
-                            }
+                    def nupkgFiles = "**/*.nupkg"
+                    findFiles(glob: nupkgFiles).each { nugetPkg ->
+                        def pkgName = nugetPkg.getName()
+                        pkgName = pkgName.substring(0, pkgName.length() - 6) // Remove extension
+                        if(packages.contains(pkgName)) {
+                            error "The package ${pkgName} is already in the NuGet repository."
+                        } else {
+                            echo "The package ${nugetPkg} is not in the NuGet repository."
                         }
                     }
                 }
