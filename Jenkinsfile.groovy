@@ -55,18 +55,18 @@ pipeline {
                 }
             }
         }
-        stage('Build Solution') {
+        stage('Build Solution - Debug') {
             steps {
                 echo "Setting NuGet Package version to: ${nugetVersion}"
                 echo "Setting File and Assembly version to ${version}"
-                bat "dotnet build --nologo -c Release -p:PackageVersion=${nugetVersion} -p:Version=${version} --no-restore" 
+                bat "dotnet build --nologo -c Debug -p:PackageVersion=${nugetVersion} -p:Version=${version} --no-restore" 
             }
         }
         stage ("Run Tests") {
             steps {
                 // MSTest projects automatically include coverlet that can generate cobertura formatted coverage information.
                 bat """
-                    dotnet test --nologo -c Release --results-directory TestResults --logger trx --collect:"XPlat code coverage" --no-restore --no-build
+                    dotnet test --nologo -c Debug --results-directory TestResults --logger trx --collect:"XPlat code coverage" --no-restore --no-build
                     """
             }
         }
@@ -94,6 +94,18 @@ pipeline {
                     [thresholdTarget: 'Conditional', unhealthyThreshold: 0.0, unstableThreshold: 0.0],
                     ])
                 ], failNoReports: true, failUnhealthy: true, calculateDiffForChangeRequests: true)
+            }
+        }
+        stage('Clean') {
+            steps {
+                bat "dotnet clean --nologo"
+            }
+        }
+        stage('Build Solution - Release') {
+            steps {
+                echo "Setting NuGet Package version to: ${nugetVersion}"
+                echo "Setting File and Assembly version to ${version}"
+                bat "dotnet build --nologo -c Release -p:PackageVersion=${nugetVersion} -p:Version=${version} --no-restore" 
             }
         }
         stage ("Run Security Scan") {
