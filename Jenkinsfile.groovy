@@ -243,8 +243,8 @@ String gatherCoverageResults(String searchPath) {
 
         def cover = new XmlParser(false, true, true).parseText(data)
 
-        linesCovered += cover['@lines-covered']
-        linesValid += cover['@lines-valid']
+        linesCovered += cover['@lines-covered'].toInteger()
+        linesValid += cover['@lines-valid'].toInteger()
         files += 1
     }
 
