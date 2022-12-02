@@ -73,7 +73,9 @@ pipeline {
         stage ("Publish Test Output") {
             steps {
                 script {
-                    testResult = "\n" + gatherTestResults('TestResults/**/*.trx')
+                    def tests = gatherTestResults('TestResults/**/*.trx')
+                    def coverage = gatherCoverageResults('TestResults/**/In/**/*.cobertura.xml')
+                    testResult = "\n${tests}\n${coverage}" 
                 }
                 mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
             }
@@ -226,5 +228,32 @@ String gatherTestResults(String searchPath) {
         }
     } else {
         return "${failed} of ${total} tests failed!"
+    }
+}
+
+String gatherCoverageResults(String searchPath) {
+    def linesCovered = 0
+    def linesValid = 0
+    def files = 0
+
+    findFiles(glob: searchPath).each { f ->
+        String fullName = f
+
+        def data = readTextFile(fullName)
+
+        def cover = new XmlParser(false, true, true).parseText(data)
+
+        def linesCovered += cover['@lines-covered']
+        def linesValid += cover['@lines-valid']
+        files += 1
+    }
+
+    if(files == 0) {
+        return "No code coverage results were found to report."
+    } else if(linesValid == 0) {
+        return "No code lines were found to collect test coverage for."
+    } else {
+        def pct = linesCovered * 100 / linesValid
+        return "${linesCovered} of ${linesValid} were tested (${pct.round(1)}%)."
     }
 }
