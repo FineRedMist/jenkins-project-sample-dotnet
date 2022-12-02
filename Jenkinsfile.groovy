@@ -98,7 +98,7 @@ pipeline {
         }
         stage('Clean') {
             steps {
-                bat "dotnet clean"
+                bat "dotnet clean --nologo"
             }
         }
         stage('Build Solution - Release') {
