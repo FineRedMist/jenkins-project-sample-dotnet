@@ -1,4 +1,7 @@
 
+import groovy.xml.*
+
+def testResult = ""
 def version = "1.0.0.${env.BUILD_NUMBER}"
 def nugetVersion = version
 
@@ -69,6 +72,9 @@ pipeline {
         }
         stage ("Publish Test Output") {
             steps {
+                script {
+                    testResult = "\n" + gatherTestResults('TestResults/**/*.trx')
+                }
                 mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
             }
         }
@@ -159,13 +165,13 @@ pipeline {
     }
     post {
         failure {
-            slackSend(color: 'danger', message: "Build Failed! ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
+            slackSend(color: 'danger', message: "Build Failed! ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)${testResult}")
         }
         unstable {
-            slackSend(color: 'warning', message: "Build Unstable! ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
+            slackSend(color: 'warning', message: "Build Unstable! ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)${testResult}")
         }
         success {
-            slackSend(color: 'good', message: "Build Succeeded! ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
+            slackSend(color: 'good', message: "Build Succeeded! ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)${testResult}")
         }
         always {
             archiveArtifacts(artifacts: "sast-report.sarif", allowEmptyArchive: true, onlyIfSuccessful: false)
@@ -173,5 +179,50 @@ pipeline {
         cleanup {
             cleanWs(deleteDirs: true, disableDeferredWipeout: true, notFailBuild: true)
         }
+    }
+}
+
+String readTextFile(String filePath) {
+    def bin64 = readFile file: filePath, encoding: 'Base64'
+    def binDat = bin64.decodeBase64()
+
+    if(binDat.size() >= 3 
+        && binDat[0] == -17
+        && binDat[1] == -69
+        && binDat[2] == -65) {
+        return new String(binDat, 3, binDat.size() - 3, "UTF-8")
+    } else {
+        return new String(binDat)
+    }
+}
+
+String gatherTestResults(String searchPath) {
+    def total = 0
+    def passed = 0
+    def failed = 0
+    def filesFound = 0
+
+    findFiles(glob: searchPath).each { f ->
+        String fullName = f
+
+        def data = readTextFile(fullName)
+
+        def trx = new XmlParser(false, true, true).parseText(data)
+
+        def counters = trx['ResultSummary']['Counters']
+
+        // echo 'Getting counter values...'
+        total += counters['@total'][0].toInteger()
+        passed += counters['@passed'][0].toInteger()
+        failed += counters['@failed'][0].toInteger()
+        filesFound = filesFound + 1
+    }
+
+    if(filesFound == 0) {
+        return "No test results found."
+    } else if(failed == 0) {
+        return "All ${total} tests passed!"
+    } else {
+        return "${failed} of ${total} tests failed!"
     }
 }
