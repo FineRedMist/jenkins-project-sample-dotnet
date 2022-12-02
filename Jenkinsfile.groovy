@@ -66,7 +66,7 @@ pipeline {
             steps {
                 // MSTest projects automatically include coverlet that can generate cobertura formatted coverage information.
                 bat """
-                    dotnet test --nologo -c Release --results-directory TestResults --logger trx --collect:"XPlat code coverage" --no-restore --no-build
+                    dotnet test --nologo -c Debug --results-directory TestResults --logger trx --collect:"XPlat code coverage" --no-restore --no-build
                     """
             }
         }
