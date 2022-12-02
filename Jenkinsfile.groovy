@@ -200,7 +200,6 @@ String gatherTestResults(String searchPath) {
     def total = 0
     def passed = 0
     def failed = 0
-    def filesFound = 0
 
     findFiles(glob: searchPath).each { f ->
         String fullName = f
@@ -215,13 +214,16 @@ String gatherTestResults(String searchPath) {
         total += counters['@total'][0].toInteger()
         passed += counters['@passed'][0].toInteger()
         failed += counters['@failed'][0].toInteger()
-        filesFound = filesFound + 1
     }
 
-    if(filesFound == 0) {
+    if(total == 0) {
         return "No test results found."
     } else if(failed == 0) {
-        return "All ${total} tests passed!"
+        if(passed == 1) {
+            return "The only test passed!"
+        } else {
+            return "All ${total} tests passed!"
+        }
     } else {
         return "${failed} of ${total} tests failed!"
     }
