@@ -18,6 +18,11 @@ pipeline {
         pollSCM 'H * * * *'
     }
     stages {
+        stage('Send start notification') {
+            steps {
+                slackSend(message: "Build Started: ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
+            }
+        }
         stage('Restore NuGet For Solution') {
             steps {
                 //  '--no-cache' to avoid a shared cache--if multiple projects are running NuGet restore, they can collide.
@@ -153,6 +158,15 @@ pipeline {
         }
     }
     post {
+        failure {
+            slackSend(color: 'danger', message: "Build Failed! ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+        }
+        unstable {
+            slackSend(color: 'warning', message: "Build Unstable! ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+        }
+        success {
+            slackSend(color: 'good', message: "Build Succeeded! ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
+        }
         always {
             archiveArtifacts(artifacts: "sast-report.sarif", allowEmptyArchive: true, onlyIfSuccessful: false)
         }
