@@ -55,11 +55,11 @@ pipeline {
                 }
             }
         }
-        stage('Build Solution') {
+        stage('Build Solution - Debug') {
             steps {
                 echo "Setting NuGet Package version to: ${nugetVersion}"
                 echo "Setting File and Assembly version to ${version}"
-                bat "dotnet build --nologo -c Release -p:PackageVersion=${nugetVersion} -p:Version=${version} --no-restore" 
+                bat "dotnet build --nologo -c Debug -p:PackageVersion=${nugetVersion} -p:Version=${version} --no-restore" 
             }
         }
         stage ("Run Tests") {
@@ -94,6 +94,18 @@ pipeline {
                     [thresholdTarget: 'Conditional', unhealthyThreshold: 0.0, unstableThreshold: 0.0],
                     ])
                 ], failNoReports: true, failUnhealthy: true, calculateDiffForChangeRequests: true)
+            }
+        }
+        stage('Clean') {
+            steps {
+                bat "dotnet clean"
+            }
+        }
+        stage('Build Solution - Release') {
+            steps {
+                echo "Setting NuGet Package version to: ${nugetVersion}"
+                echo "Setting File and Assembly version to ${version}"
+                bat "dotnet build --nologo -c Release -p:PackageVersion=${nugetVersion} -p:Version=${version} --no-restore" 
             }
         }
         stage ("Run Security Scan") {
