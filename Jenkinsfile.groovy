@@ -253,7 +253,7 @@ String gatherCoverageResults(String searchPath) {
     } else if(linesValid == 0) {
         return "No code lines were found to collect test coverage for."
     } else {
-        def pct = linesCovered * 100 / linesValid
+        def pct = linesCovered.toDouble() * 100 / linesValid.toDouble()
         return "${linesCovered} of ${linesValid} were tested (${pct.round(1)}%)."
     }
 }
