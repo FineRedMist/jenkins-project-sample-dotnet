@@ -254,6 +254,6 @@ String gatherCoverageResults(String searchPath) {
         return "No code lines were found to collect test coverage for."
     } else {
         def pct = linesCovered.toDouble() * 100 / linesValid.toDouble()
-        return "${linesCovered} of ${linesValid} were tested (${pct.round(1)}%)."
+        return "${linesCovered} of ${linesValid} lines were covered by testing (${pct.round(1)}%)."
     }
 }
