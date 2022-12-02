@@ -1,4 +1,7 @@
 
+import groovy.xml.*
+
+def testResult = ""
 def version = "1.0.0.${env.BUILD_NUMBER}"
 def nugetVersion = version
 
@@ -18,6 +21,11 @@ pipeline {
         pollSCM 'H * * * *'
     }
     stages {
+        stage('Send start notification') {
+            steps {
+                slackSend(message: "Build Started: ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
+            }
+        }
         stage('Restore NuGet For Solution') {
             steps {
                 //  '--no-cache' to avoid a shared cache--if multiple projects are running NuGet restore, they can collide.
@@ -64,6 +72,11 @@ pipeline {
         }
         stage ("Publish Test Output") {
             steps {
+                script {
+                    def tests = gatherTestResults('TestResults/**/*.trx')
+                    def coverage = gatherCoverageResults('TestResults/**/In/**/*.cobertura.xml')
+                    testResult = "\n${tests}\n${coverage}" 
+                }
                 mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
             }
         }
@@ -153,11 +166,94 @@ pipeline {
         }
     }
     post {
+        failure {
+            slackSend(color: 'danger', message: "Build Failed! ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)${testResult}")
+        }
+        unstable {
+            slackSend(color: 'warning', message: "Build Unstable! ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)${testResult}")
+        }
+        success {
+            slackSend(color: 'good', message: "Build Succeeded! ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)${testResult}")
+        }
         always {
-            archiveArtifacts(artifacts: "sast-report.sarif", allowEmptyArchive: true, onlyIfSuccessful: false)
+            archiveArtifacts(artifacts: "sast-report.sarif,TestResults/**/*.xml", allowEmptyArchive: true, onlyIfSuccessful: false)
         }
         cleanup {
             cleanWs(deleteDirs: true, disableDeferredWipeout: true, notFailBuild: true)
         }
+    }
+}
+
+String readTextFile(String filePath) {
+    def bin64 = readFile file: filePath, encoding: 'Base64'
+    def binDat = bin64.decodeBase64()
+
+    if(binDat.size() >= 3 
+        && binDat[0] == -17
+        && binDat[1] == -69
+        && binDat[2] == -65) {
+        return new String(binDat, 3, binDat.size() - 3, "UTF-8")
+    } else {
+        return new String(binDat)
+    }
+}
+
+String gatherTestResults(String searchPath) {
+    def total = 0
+    def passed = 0
+    def failed = 0
+
+    findFiles(glob: searchPath).each { f ->
+        String fullName = f
+
+        def data = readTextFile(fullName)
+
+        def trx = new XmlParser(false, true, true).parseText(data)
+
+        def counters = trx['ResultSummary']['Counters']
+
+        // echo 'Getting counter values...'
+        total += counters['@total'][0].toInteger()
+        passed += counters['@passed'][0].toInteger()
+        failed += counters['@failed'][0].toInteger()
+    }
+
+    if(total == 0) {
+        return "No test results found."
+    } else if(failed == 0) {
+        if(passed == 1) {
+            return "The only test passed!"
+        } else {
+            return "All ${total} tests passed!"
+        }
+    } else {
+        return "${failed} of ${total} tests failed!"
+    }
+}
+
+String gatherCoverageResults(String searchPath) {
+    def linesCovered = 0
+    def linesValid = 0
+    def files = 0
+
+    findFiles(glob: searchPath).each { f ->
+        String fullName = f
+
+        def data = readTextFile(fullName)
+
+        def cover = new XmlParser(false, true, true).parseText(data)
+
+        linesCovered += cover['@lines-covered'].toInteger()
+        linesValid += cover['@lines-valid'].toInteger()
+        files += 1
+    }
+
+    if(files == 0) {
+        return "No code coverage results were found to report."
+    } else if(linesValid == 0) {
+        return "No code lines were found to collect test coverage for."
+    } else {
+        def pct = linesCovered.toDouble() * 100 / linesValid.toDouble()
+        return "${linesCovered} of ${linesValid} lines were covered by testing (${pct.round(1)}%)."
     }
 }
