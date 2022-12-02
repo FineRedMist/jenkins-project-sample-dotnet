@@ -176,7 +176,7 @@ pipeline {
             slackSend(color: 'good', message: "Build Succeeded! ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)${testResult}")
         }
         always {
-            archiveArtifacts(artifacts: "sast-report.sarif", allowEmptyArchive: true, onlyIfSuccessful: false)
+            archiveArtifacts(artifacts: "sast-report.sarif,TestResults/**/*.xml", allowEmptyArchive: true, onlyIfSuccessful: false)
         }
         cleanup {
             cleanWs(deleteDirs: true, disableDeferredWipeout: true, notFailBuild: true)
