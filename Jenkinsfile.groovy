@@ -211,7 +211,7 @@ String readTextFile(String filePath) {
 }
 
 enum BuildNotifyStatus {
-    Pending("started", Null, GitHubStatus.Pending),
+    Pending("started", null, GitHubStatus.Pending),
     Unstable("unstable", "warning", GitHubStatus.Failure),
     Failure("failed", "danger", GitHubStatus.Failure),
     Success("successful", "good", GitHubStatus.Success)
