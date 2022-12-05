@@ -214,7 +214,7 @@ enum BuildNotifyStatus {
     Pending("started", Null, GitHubStatus.Pending),
     Unstable("unstable", "warning", GitHubStatus.Failure),
     Failure("failed", "danger", GitHubStatus.Failure),
-    Success("successful", "good", githubStatus.Success)
+    Success("successful", "good", GitHubStatus.Success)
 
     String notifyText
     String slackColour
