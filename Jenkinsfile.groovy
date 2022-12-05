@@ -229,7 +229,7 @@ enum BuildNotifyStatus {
 
 void notifyBuildStatus(BuildNotifyStatus status)
 {
-    slackSend(color: status.slackColour, message: "Build ${status.notifyText}: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)${testResult}")
+    slackSend(color: status.slackColour, message: "Build ${status.notifyText}: <${env.BUILD_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}>${testResult}")
     setBuildStatus('Build ${status.notifyText}...', status.githubStatus)
 }
 
