@@ -229,7 +229,7 @@ enum BuildNotifyStatus {
 
 void notifyBuildStatus(BuildNotifyStatus status, String testResult = '') {
     slackSend(color: status.slackColour, message: "Build ${status.notifyText}: <${env.BUILD_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}>${testResult}")
-    setBuildStatus('Build ${status.notifyText}...', status.githubStatus)
+    setBuildStatus("Build ${status.notifyText}...", status.githubStatus)
 }
 
 enum GitHubStatus {
