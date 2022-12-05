@@ -21,9 +21,9 @@ pipeline {
         pollSCM 'H * * * *'
     }
     stages {
-        stage('Send start notification') {
+        stage('Send Start Notification') {
             steps {
-                slackSend(message: "Build Started: ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
+                notifyBuildStatus(BuildNotifyStatus.Pending)
             }
         }
         stage('Restore NuGet For Solution') {
@@ -179,13 +179,13 @@ pipeline {
     }
     post {
         failure {
-            slackSend(color: 'danger', message: "Build Failed! ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)${testResult}")
+            notifyBuildStatus(BuildNotifyStatus.Failure)
         }
         unstable {
-            slackSend(color: 'warning', message: "Build Unstable! ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)${testResult}")
+            notifyBuildStatus(BuildNotifyStatus.Unstable)
         }
         success {
-            slackSend(color: 'good', message: "Build Succeeded! ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)${testResult}")
+            notifyBuildStatus(BuildNotifyStatus.Success)
         }
         always {
             archiveArtifacts(artifacts: "sast-report.sarif,TestResults/**/*.xml", allowEmptyArchive: true, onlyIfSuccessful: false)
@@ -207,6 +207,41 @@ String readTextFile(String filePath) {
         return new String(binDat, 3, binDat.size() - 3, "UTF-8")
     } else {
         return new String(binDat)
+    }
+}
+
+enum BuildNotifyStatus {
+    Pending("started", Null, GitHubStatus.Pending),
+    Unstable("unstable", "warning", GitHubStatus.Failure),
+    Failure("failed", "danger", GitHubStatus.Failure),
+    Success("successful", "good", githubStatus.Success)
+
+    String notifyText
+    String slackColour
+    GitHubStatus githubStatus
+
+    BuildNotifyStatus(String text, String colour, GitHubStatus github) {
+        notifyText = text
+        slackColour = colour
+        githubStatus = github
+    }
+}
+
+void notifyBuildStatus(BuildNotifyStatus status)
+{
+    slackSend(color: status.slackColour, message: "Build ${status.notifyText}: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)${testResult}")
+    setBuildStatus('Build ${status.notifyText}...', status.githubStatus)
+}
+
+enum GitHubStatus {
+    Pending('PENDING'),
+    Failure('FAILURE'),
+    Success('SUCCESS')
+
+    String githubState
+
+    GitHubStatus(String state) {
+        githubState = state
     }
 }
 
@@ -268,4 +303,28 @@ String gatherCoverageResults(String searchPath) {
         def pct = linesCovered.toDouble() * 100 / linesValid.toDouble()
         return "${linesCovered} of ${linesValid} lines were covered by testing (${pct.round(1)}%)."
     }
+}
+
+void setBuildStatus(String message, GitHubStatus state) {
+    def gitRepo = ""
+    def gitOwner = ""
+    def gitSha = ""
+
+    gitSha = env.GIT_COMMIT
+    if(env.GIT_URL && env.GIT_URL.toLowerCase().endsWith('.git')) {
+        def matcher = env.GIT_URL =~ /.*[:\/](?<owner>[^:\/]*)\/(?<repo>.*)\.git/
+        if(matcher.find()) {
+            gitRepo = matcher.group("repo")
+            gitOwner = matcher.group("owner")
+        }
+    }
+
+    if(gitRepo.length() == 0
+        || gitOwner.length() == 0
+        || gitSha.length() == 0) {
+        return
+    }
+
+    echo "Setting build status for owner ${gitOwner} and repository ${gitRepo} to: (${state}) ${message}"
+    githubNotify(credentialsId: 'GitHub-Status-Notify', repo: gitRepo, account: gitOwner, sha: gitSha, context: 'Status', description: message, status: state.githubState, targetUrl: env.BUIlD_URL)
 }
