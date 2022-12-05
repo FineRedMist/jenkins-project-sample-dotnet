@@ -179,13 +179,13 @@ pipeline {
     }
     post {
         failure {
-            notifyBuildStatus(BuildNotifyStatus.Failure)
+            notifyBuildStatus(BuildNotifyStatus.Failure, testResult)
         }
         unstable {
-            notifyBuildStatus(BuildNotifyStatus.Unstable)
+            notifyBuildStatus(BuildNotifyStatus.Unstable, testResult)
         }
         success {
-            notifyBuildStatus(BuildNotifyStatus.Success)
+            notifyBuildStatus(BuildNotifyStatus.Success, testResult)
         }
         always {
             archiveArtifacts(artifacts: "sast-report.sarif", allowEmptyArchive: true, onlyIfSuccessful: false)
@@ -227,8 +227,7 @@ enum BuildNotifyStatus {
     }
 }
 
-void notifyBuildStatus(BuildNotifyStatus status)
-{
+void notifyBuildStatus(BuildNotifyStatus status, String testResult = '') {
     slackSend(color: status.slackColour, message: "Build ${status.notifyText}: <${env.BUILD_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}>${testResult}")
     setBuildStatus('Build ${status.notifyText}...', status.githubStatus)
 }
