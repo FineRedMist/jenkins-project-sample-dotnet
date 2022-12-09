@@ -26,7 +26,7 @@ pipeline {
                 notifyBuildStatus(BuildNotifyStatus.Pending)
             }
         }
-        staege('Setup for forensics') {
+        stage('Setup for forensics') {
             steps {
                 discoverGitReferenceBuild()
             }
