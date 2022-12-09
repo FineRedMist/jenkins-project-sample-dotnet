@@ -191,9 +191,6 @@ pipeline {
         success {
             notifyBuildStatus(BuildNotifyStatus.Success, testResult)
         }
-        always {
-            archiveArtifacts(artifacts: "sast-report.sarif", allowEmptyArchive: true, onlyIfSuccessful: false)
-        }
         cleanup {
             cleanWs(deleteDirs: true, disableDeferredWipeout: true, notFailBuild: true)
         }
