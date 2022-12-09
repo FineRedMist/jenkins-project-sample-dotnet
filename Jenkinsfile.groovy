@@ -82,6 +82,8 @@ pipeline {
         }
         stage ("Publish Code Coverage") {
             steps {
+                discoverGitReferenceBuild
+
                 publishCoverage(adapters: [
                     coberturaAdapter(path: "TestResults/**/In/**/*.cobertura.xml", thresholds: [
                     [thresholdTarget: 'Group', unhealthyThreshold: 100.0],
@@ -127,6 +129,8 @@ pipeline {
                     bat """
                     dotnet security-scan ${slnFile} --excl-proj=**/*Test*/** -n --cwe --export=sast-report.sarif
                     """
+
+                    recordIssues aggregatingResults: true, enabledForFailure: true, failOnError: true, tool: sarif(pattern: 'sast-report.sarif')
                 }
             }
         }
