@@ -82,7 +82,7 @@ pipeline {
         }
         stage ("Publish Code Coverage") {
             steps {
-                discoverGitReferenceBuild
+                discoverGitReferenceBuild()
 
                 publishCoverage(adapters: [
                     coberturaAdapter(path: "TestResults/**/In/**/*.cobertura.xml", thresholds: [
