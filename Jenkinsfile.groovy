@@ -195,7 +195,7 @@ pipeline {
             notifyBuildStatus(BuildNotifyStatus.Success, testResult)
         }
         always {
-            recordIssues enabledForFailure: true, tool: msbuild()
+            recordIssues enabledForFailure: true, tool: msBuild()
         }
         cleanup {
             cleanWs(deleteDirs: true, disableDeferredWipeout: true, notFailBuild: true)
