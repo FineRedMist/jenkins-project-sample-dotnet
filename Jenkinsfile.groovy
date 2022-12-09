@@ -195,14 +195,16 @@ pipeline {
     }
     post {
         always {
-            def analysisIssues = scanForIssues tool: msBuild()
-            def analysisText = getAnaylsisResultsText(analysisIssues)
-            if(analysisText.length > 0) {
-                buildMessages = "Build warnings and errors:\n" + analysisText
-            } else {
-                buildMessages = "No build warnings or errors."
+            script {
+                def analysisIssues = scanForIssues tool: msBuild()
+                def analysisText = getAnaylsisResultsText(analysisIssues)
+                if(analysisText.length > 0) {
+                    buildMessages = "Build warnings and errors:\n" + analysisText
+                } else {
+                    buildMessages = "No build warnings or errors."
+                }
+                publishIssues issues: [analysisIssues], aggregatingResults: true, enabledForFailure: true, failOnError: true
             }
-            publishIssues issues: [analysisIssues], aggregatingResults: true, enabledForFailure: true, failOnError: true
         }
         failure {
             notifyBuildStatus(BuildNotifyStatus.Failure, testResult)
