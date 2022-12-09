@@ -4,6 +4,8 @@ import groovy.xml.*
 def testResult = ""
 def version = "1.0.0.${env.BUILD_NUMBER}"
 def nugetVersion = version
+def buildMessages = ""
+def analysisMessages = ""
 
 pipeline {
     // Run on any available Jenkins agent.
@@ -133,7 +135,14 @@ pipeline {
                     dotnet security-scan ${slnFile} --excl-proj=**/*Test*/** -n --cwe --export=sast-report.sarif
                     """
 
-                    recordIssues aggregatingResults: true, enabledForFailure: true, failOnError: true, tool: sarif(pattern: 'sast-report.sarif')
+                    def analysisIssues = scanForIssues tool: sarif(pattern: 'sast-report.sarif')
+                    def analysisText = getAnaylsisResultsText(analysisIssues)
+                    if(analysisText.length > 0) {
+                        analysisMessages = "Static analysis results:\n" + analysisText
+                    } else {
+                        analysisMessages = "No static analysis results to report."
+                    }
+                    publishIssues issues: [analysisIssues], aggregatingResults: true, enabledForFailure: true, failOnError: true
                 }
             }
         }
@@ -185,6 +194,16 @@ pipeline {
         }
     }
     post {
+        always {
+            def analysisIssues = scanForIssues tool: msBuild()
+            def analysisText = getAnaylsisResultsText(analysisIssues)
+            if(analysisText.length > 0) {
+                buildMessages = "Build warnings and errors:\n" + analysisText
+            } else {
+                buildMessages = "No build warnings or errors."
+            }
+            publishIssues issues: [analysisIssues], aggregatingResults: true, enabledForFailure: true, failOnError: true
+        }
         failure {
             notifyBuildStatus(BuildNotifyStatus.Failure, testResult)
         }
@@ -193,9 +212,6 @@ pipeline {
         }
         success {
             notifyBuildStatus(BuildNotifyStatus.Success, testResult)
-        }
-        always {
-            recordIssues enabledForFailure: true, tool: msBuild()
         }
         cleanup {
             cleanWs(deleteDirs: true, disableDeferredWipeout: true, notFailBuild: true)
@@ -235,7 +251,12 @@ enum BuildNotifyStatus {
 }
 
 void notifyBuildStatus(BuildNotifyStatus status, String testResult = '') {
-    slackSend(color: status.slackColour, message: "Build ${status.notifyText}: <${env.BUILD_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}>${testResult}")
+    def sent = slackSend(color: status.slackColour, message: "Build ${status.notifyText}: <${env.BUILD_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}>${testResult}")
+    [analysisMessages, buildMessages].each { message ->
+        if(message.length > 0) {
+            slackSend(channel: sent, message: message)
+        }
+    }
     setBuildStatus("Build ${status.notifyText}...", status.githubStatus)
 }
 
@@ -309,6 +330,14 @@ String gatherCoverageResults(String searchPath) {
         def pct = linesCovered.toDouble() * 100 / linesValid.toDouble()
         return "${linesCovered} of ${linesValid} lines were covered by testing (${pct.round(1)}%)."
     }
+}
+
+String getAnaylsisResultsText(def analysisResults) {
+    String issues = ""
+    analysisIssues.getIssues().forEach() { issue ->
+        issues = issues + "* ${issue}\n"
+    }
+    return issues
 }
 
 void setBuildStatus(String message, GitHubStatus state) {
