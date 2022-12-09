@@ -26,6 +26,11 @@ pipeline {
                 notifyBuildStatus(BuildNotifyStatus.Pending)
             }
         }
+        staege('Setup for forensics') {
+            steps {
+                discoverGitReferenceBuild()
+            }
+        }
         stage('Restore NuGet For Solution') {
             steps {
                 //  '--no-cache' to avoid a shared cache--if multiple projects are running NuGet restore, they can collide.
@@ -82,8 +87,6 @@ pipeline {
         }
         stage ("Publish Code Coverage") {
             steps {
-                discoverGitReferenceBuild()
-
                 publishCoverage(adapters: [
                     coberturaAdapter(path: "TestResults/**/In/**/*.cobertura.xml", thresholds: [
                     [thresholdTarget: 'Group', unhealthyThreshold: 100.0],
@@ -190,6 +193,9 @@ pipeline {
         }
         success {
             notifyBuildStatus(BuildNotifyStatus.Success, testResult)
+        }
+        always {
+            recordIssues enabledForFailure: true, tool: msbuild()
         }
         cleanup {
             cleanWs(deleteDirs: true, disableDeferredWipeout: true, notFailBuild: true)
