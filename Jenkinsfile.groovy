@@ -256,11 +256,10 @@ enum BuildNotifyStatus {
 }
 
 void notifyBuildStatus(BuildNotifyStatus status, List<String> testResults = []) {
-    def emoji = 'jenkinscthulhu'
-    def sent = slackSend(channel: '#build-notifications', color: status.slackColour, iconEmoji: emoji, message: "Build ${status.notifyText}: <${env.BUILD_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}>")
+    def sent = slackSend(channel: '#build-notifications', color: status.slackColour, message: "Build ${status.notifyText}: <${env.BUILD_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}>")
     testResults.each { message ->
         if(message.length() > 0) {
-            slackSend(channel: sent.threadId, color: status.slackColour, iconEmoji: emoji, message: message)
+            slackSend(channel: sent.threadId, color: status.slackColour, message: message)
         }
     }
     setBuildStatus("Build ${status.notifyText}", status.githubStatus)
