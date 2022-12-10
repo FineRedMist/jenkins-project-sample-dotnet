@@ -4,6 +4,7 @@ import groovy.xml.*
 def testResults = []
 def version = "1.0.0.${env.BUILD_NUMBER}"
 def nugetVersion = version
+def analyses = []
 
 pipeline {
     // Run on any available Jenkins agent.
@@ -134,13 +135,13 @@ pipeline {
                     """
 
                     def analysisIssues = scanForIssues tool: sarif(pattern: 'sast-report.sarif')
+                    analyses << analysisIssues
                     def analysisText = getAnaylsisResultsText(analysisIssues)
                     if(analysisText.length() > 0) {
                         testResults << "Static analysis results:\n" + analysisText
                     } else {
                         testResults << "No static analysis results to report."
                     }
-                    publishIssues issues: [analysisIssues], aggregatingResults: true, enabledForFailure: true, failOnError: true
                 }
             }
         }
@@ -195,13 +196,14 @@ pipeline {
         always {
             script {
                 def analysisIssues = scanForIssues tool: msBuild()
+                analyses << analysisIssues
                 def analysisText = getAnaylsisResultsText(analysisIssues)
                 if(analysisText.length() > 0) {
                     testResults << "Build warnings and errors:\n" + analysisText
                 } else {
                     testResults << "No build warnings or errors."
                 }
-                publishIssues issues: [analysisIssues], aggregatingResults: true, enabledForFailure: true, failOnError: true
+                publishIssues issues: analyses, aggregatingResults: true, enabledForFailure: true, failOnError: true
             }
         }
         failure {
