@@ -142,6 +142,8 @@ pipeline {
                     } else {
                         testResults << "No static analysis issues to report."
                     }
+                    // Rescan. If we collect and then aggregate, warnings become errors
+                    recordIssues aggregatingResults: true, enabledForFailure: true, failOnError: true, skipPublishingChecks: true, tool: sarif(pattern: 'sast-report.sarif')
                 }
             }
         }
@@ -203,7 +205,8 @@ pipeline {
                 } else {
                     testResults << "No build warnings or errors."
                 }
-                publishIssues issues: analyses, failOnError: true, skipPublishingChecks: true
+                // Rescan. If we collect and then aggregate, warnings become errors
+                recordIssues aggregatingResults: true, enabledForFailure: true, failOnError: true, skipPublishingChecks: true, tool: msBuild()
             }
         }
         failure {
