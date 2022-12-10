@@ -140,7 +140,7 @@ pipeline {
                     if(analysisText.length() > 0) {
                         testResults << "Static analysis results:\n" + analysisText
                     } else {
-                        testResults << "No static analysis results to report."
+                        testResults << "No static analysis issues to report."
                     }
                 }
             }
@@ -203,7 +203,7 @@ pipeline {
                 } else {
                     testResults << "No build warnings or errors."
                 }
-                publishIssues issues: analyses, aggregatingResults: true, enabledForFailure: true, failOnError: true
+                publishIssues issues: analyses, failOnError: true
             }
         }
         failure {
