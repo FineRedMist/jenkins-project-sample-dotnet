@@ -1,9 +1,10 @@
 
 import groovy.xml.*
 
-def testResult = ""
+def testResults = []
 def version = "1.0.0.${env.BUILD_NUMBER}"
 def nugetVersion = version
+def analyses = []
 
 pipeline {
     // Run on any available Jenkins agent.
@@ -21,9 +22,14 @@ pipeline {
         pollSCM 'H * * * *'
     }
     stages {
-        stage('Send start notification') {
+        stage('Send Start Notification') {
             steps {
-                slackSend(message: "Build Started: ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)")
+                notifyBuildStatus(BuildNotifyStatus.Pending)
+            }
+        }
+        stage('Setup for forensics') {
+            steps {
+                discoverGitReferenceBuild()
             }
         }
         stage('Restore NuGet For Solution') {
@@ -75,7 +81,7 @@ pipeline {
                 script {
                     def tests = gatherTestResults('TestResults/**/*.trx')
                     def coverage = gatherCoverageResults('TestResults/**/In/**/*.cobertura.xml')
-                    testResult = "\n${tests}\n${coverage}" 
+                    testResults << "\n${tests}\n${coverage}"
                 }
                 mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
             }
@@ -127,6 +133,17 @@ pipeline {
                     bat """
                     dotnet security-scan ${slnFile} --excl-proj=**/*Test*/** -n --cwe --export=sast-report.sarif
                     """
+
+                    def analysisIssues = scanForIssues tool: sarif(pattern: 'sast-report.sarif')
+                    analyses << analysisIssues
+                    def analysisText = getAnaylsisResultsText(analysisIssues)
+                    if(analysisText.length() > 0) {
+                        testResults << "Static analysis results:\n" + analysisText
+                    } else {
+                        testResults << "No static analysis issues to report."
+                    }
+                    // Rescan. If we collect and then aggregate, warnings become errors
+                    recordIssues aggregatingResults: true, enabledForFailure: true, failOnError: true, skipPublishingChecks: true, tool: sarif(pattern: 'sast-report.sarif')
                 }
             }
         }
@@ -178,17 +195,28 @@ pipeline {
         }
     }
     post {
+        always {
+            script {
+                def analysisIssues = scanForIssues tool: msBuild()
+                analyses << analysisIssues
+                def analysisText = getAnaylsisResultsText(analysisIssues)
+                if(analysisText.length() > 0) {
+                    testResults << "Build warnings and errors:\n" + analysisText
+                } else {
+                    testResults << "No build warnings or errors."
+                }
+                // Rescan. If we collect and then aggregate, warnings become errors
+                recordIssues aggregatingResults: true, skipPublishingChecks: true, tool: msBuild()
+            }
+        }
         failure {
-            slackSend(color: 'danger', message: "Build Failed! ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)${testResult}")
+            notifyBuildStatus(BuildNotifyStatus.Failure, testResults)
         }
         unstable {
-            slackSend(color: 'warning', message: "Build Unstable! ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)${testResult}")
+            notifyBuildStatus(BuildNotifyStatus.Unstable, testResults)
         }
         success {
-            slackSend(color: 'good', message: "Build Succeeded! ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)${testResult}")
-        }
-        always {
-            archiveArtifacts(artifacts: "sast-report.sarif,TestResults/**/*.xml", allowEmptyArchive: true, onlyIfSuccessful: false)
+            notifyBuildStatus(BuildNotifyStatus.Success, testResults)
         }
         cleanup {
             cleanWs(deleteDirs: true, disableDeferredWipeout: true, notFailBuild: true)
@@ -207,6 +235,45 @@ String readTextFile(String filePath) {
         return new String(binDat, 3, binDat.size() - 3, "UTF-8")
     } else {
         return new String(binDat)
+    }
+}
+
+enum BuildNotifyStatus {
+    Pending("started", null, GitHubStatus.Pending),
+    Unstable("unstable", "warning", GitHubStatus.Failure),
+    Failure("failed", "danger", GitHubStatus.Failure),
+    Success("successful", "good", GitHubStatus.Success)
+
+    String notifyText
+    String slackColour
+    GitHubStatus githubStatus
+
+    BuildNotifyStatus(String text, String colour, GitHubStatus github) {
+        notifyText = text
+        slackColour = colour
+        githubStatus = github
+    }
+}
+
+void notifyBuildStatus(BuildNotifyStatus status, List<String> testResults = []) {
+    def sent = slackSend(channel: '#build-notifications', color: status.slackColour, message: "Build ${status.notifyText}: <${env.BUILD_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}>")
+    testResults.each { message ->
+        if(message.length() > 0) {
+            slackSend(channel: sent.threadId, color: status.slackColour, message: message)
+        }
+    }
+    setBuildStatus("Build ${status.notifyText}", status.githubStatus)
+}
+
+enum GitHubStatus {
+    Pending('PENDING'),
+    Failure('FAILURE'),
+    Success('SUCCESS')
+
+    String githubState
+
+    GitHubStatus(String state) {
+        githubState = state
     }
 }
 
@@ -268,4 +335,36 @@ String gatherCoverageResults(String searchPath) {
         def pct = linesCovered.toDouble() * 100 / linesValid.toDouble()
         return "${linesCovered} of ${linesValid} lines were covered by testing (${pct.round(1)}%)."
     }
+}
+
+String getAnaylsisResultsText(def analysisResults) {
+    String issues = ""
+    analysisResults.getIssues().each { issue ->
+        issues = issues + "* ${issue}\n"
+    }
+    return issues
+}
+
+void setBuildStatus(String message, GitHubStatus state) {
+    def gitRepo = ""
+    def gitOwner = ""
+    def gitSha = ""
+
+    gitSha = env.GIT_COMMIT
+    if(env.GIT_URL && env.GIT_URL.toLowerCase().endsWith('.git')) {
+        def matcher = env.GIT_URL =~ /.*[:\/](?<owner>[^:\/]*)\/(?<repo>.*)\.git/
+        if(matcher.find()) {
+            gitRepo = matcher.group("repo")
+            gitOwner = matcher.group("owner")
+        }
+    }
+
+    if(gitRepo.length() == 0
+        || gitOwner.length() == 0
+        || gitSha.length() == 0) {
+        return
+    }
+
+    echo "Setting build status for owner ${gitOwner} and repository ${gitRepo} to: (${state}) ${message}"
+    githubNotify(credentialsId: 'GitHub-Status-Notify', repo: gitRepo, account: gitOwner, sha: gitSha, context: 'Status', description: message, status: state.githubState, targetUrl: env.BUIlD_URL)
 }
