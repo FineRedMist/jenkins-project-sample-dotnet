@@ -251,7 +251,7 @@ enum BuildNotifyStatus {
 }
 
 void notifyBuildStatus(BuildNotifyStatus status, List<String> testResults = []) {
-    def sent = slackSend(color: status.slackColour, message: "Build ${status.notifyText}: <${env.BUILD_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}>")
+    def sent = slackSend(color: status.slackColour, channel: '#build-notifications', message: "Build ${status.notifyText}: <${env.BUILD_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}>")
     testResults.each { message ->
         if(message.length() > 0) {
             slackSend(channel: sent.threadId, message: message)
