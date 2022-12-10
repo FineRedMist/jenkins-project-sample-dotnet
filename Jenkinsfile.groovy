@@ -206,7 +206,7 @@ pipeline {
                     testResults << "No build warnings or errors."
                 }
                 // Rescan. If we collect and then aggregate, warnings become errors
-                recordIssues aggregatingResults: true, enabledForFailure: true, failOnError: true, skipPublishingChecks: true, tool: msBuild()
+                recordIssues aggregatingResults: true, skipPublishingChecks: true, tool: msBuild()
             }
         }
         failure {
