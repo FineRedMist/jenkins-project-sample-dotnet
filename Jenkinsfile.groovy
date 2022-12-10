@@ -135,7 +135,7 @@ pipeline {
 
                     def analysisIssues = scanForIssues tool: sarif(pattern: 'sast-report.sarif')
                     def analysisText = getAnaylsisResultsText(analysisIssues)
-                    if(analysisText.length > 0) {
+                    if(analysisText.length() > 0) {
                         testResults << "Static analysis results:\n" + analysisText
                     } else {
                         testResults << "No static analysis results to report."
@@ -196,7 +196,7 @@ pipeline {
             script {
                 def analysisIssues = scanForIssues tool: msBuild()
                 def analysisText = getAnaylsisResultsText(analysisIssues)
-                if(analysisText.length > 0) {
+                if(analysisText.length() > 0) {
                     testResults << "Build warnings and errors:\n" + analysisText
                 } else {
                     testResults << "No build warnings or errors."
@@ -253,7 +253,7 @@ enum BuildNotifyStatus {
 void notifyBuildStatus(BuildNotifyStatus status, List<String> testResults = []) {
     def sent = slackSend(color: status.slackColour, message: "Build ${status.notifyText}: <${env.BUILD_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}>")
     testResults.each { message ->
-        if(message.length > 0) {
+        if(message.length() > 0) {
             slackSend(channel: sent, message: message)
         }
     }
