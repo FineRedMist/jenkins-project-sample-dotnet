@@ -203,7 +203,7 @@ pipeline {
                 } else {
                     testResults << "No build warnings or errors."
                 }
-                publishIssues issues: analyses, failOnError: true
+                publishIssues issues: analyses, failOnError: true, skipPublishingChecks: true
             }
         }
         failure {
