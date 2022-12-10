@@ -334,7 +334,7 @@ String gatherCoverageResults(String searchPath) {
 
 String getAnaylsisResultsText(def analysisResults) {
     String issues = ""
-    analysisIssues.getIssues().forEach() { issue ->
+    analysisResults.getIssues().forEach() { issue ->
         issues = issues + "* ${issue}\n"
     }
     return issues
