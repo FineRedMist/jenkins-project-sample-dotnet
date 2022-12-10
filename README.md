@@ -15,3 +15,5 @@ The corresponding blog posts (so far) are available at:
  * [CI/CD Static Security Scanning](https://www.oneoddsock.com/2022/11/26/ci-cd-security-scanning/)
  * [CI/CD Slack Notifications](https://www.oneoddsock.com/2022/12/01/ci-cd-slack-notifications/)
  * [CI/CD Test Results in Slack](https://www.oneoddsock.com/2022/12/01/ci-cd-test-results-in-slack/)
+ * [CI/CD Extending Slack Support](https://www.oneoddsock.com/2022/12/10/ci-cd-extending-slack-support/)
+ * [CI/CD Log Processing](https://www.oneoddsock.com/2022/12/10/ci-cd-log-processing/)
