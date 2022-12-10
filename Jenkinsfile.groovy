@@ -1,11 +1,9 @@
 
 import groovy.xml.*
 
-def testResult = ""
+def testResults = []
 def version = "1.0.0.${env.BUILD_NUMBER}"
 def nugetVersion = version
-def buildMessages = ""
-def analysisMessages = ""
 
 pipeline {
     // Run on any available Jenkins agent.
@@ -82,7 +80,7 @@ pipeline {
                 script {
                     def tests = gatherTestResults('TestResults/**/*.trx')
                     def coverage = gatherCoverageResults('TestResults/**/In/**/*.cobertura.xml')
-                    testResult = "\n${tests}\n${coverage}" 
+                    testResults << "\n${tests}\n${coverage}"
                 }
                 mstest testResultsFile:"TestResults/**/*.trx", failOnError: true, keepLongStdio: true
             }
@@ -138,9 +136,9 @@ pipeline {
                     def analysisIssues = scanForIssues tool: sarif(pattern: 'sast-report.sarif')
                     def analysisText = getAnaylsisResultsText(analysisIssues)
                     if(analysisText.length > 0) {
-                        analysisMessages = "Static analysis results:\n" + analysisText
+                        testResults << "Static analysis results:\n" + analysisText
                     } else {
-                        analysisMessages = "No static analysis results to report."
+                        testResults << "No static analysis results to report."
                     }
                     publishIssues issues: [analysisIssues], aggregatingResults: true, enabledForFailure: true, failOnError: true
                 }
@@ -199,21 +197,21 @@ pipeline {
                 def analysisIssues = scanForIssues tool: msBuild()
                 def analysisText = getAnaylsisResultsText(analysisIssues)
                 if(analysisText.length > 0) {
-                    buildMessages = "Build warnings and errors:\n" + analysisText
+                    testResults << "Build warnings and errors:\n" + analysisText
                 } else {
-                    buildMessages = "No build warnings or errors."
+                    testResults << "No build warnings or errors."
                 }
                 publishIssues issues: [analysisIssues], aggregatingResults: true, enabledForFailure: true, failOnError: true
             }
         }
         failure {
-            notifyBuildStatus(BuildNotifyStatus.Failure, testResult)
+            notifyBuildStatus(BuildNotifyStatus.Failure, testResults)
         }
         unstable {
-            notifyBuildStatus(BuildNotifyStatus.Unstable, testResult)
+            notifyBuildStatus(BuildNotifyStatus.Unstable, testResults)
         }
         success {
-            notifyBuildStatus(BuildNotifyStatus.Success, testResult)
+            notifyBuildStatus(BuildNotifyStatus.Success, testResults)
         }
         cleanup {
             cleanWs(deleteDirs: true, disableDeferredWipeout: true, notFailBuild: true)
@@ -252,14 +250,14 @@ enum BuildNotifyStatus {
     }
 }
 
-void notifyBuildStatus(BuildNotifyStatus status, String testResult = '') {
-    def sent = slackSend(color: status.slackColour, message: "Build ${status.notifyText}: <${env.BUILD_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}>${testResult}")
-    [analysisMessages, buildMessages].each { message ->
+void notifyBuildStatus(BuildNotifyStatus status, List<String> testResults = []) {
+    def sent = slackSend(color: status.slackColour, message: "Build ${status.notifyText}: <${env.BUILD_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}>")
+    testResults.each { message ->
         if(message.length > 0) {
             slackSend(channel: sent, message: message)
         }
     }
-    setBuildStatus("Build ${status.notifyText}...", status.githubStatus)
+    setBuildStatus("Build ${status.notifyText}", status.githubStatus)
 }
 
 enum GitHubStatus {
