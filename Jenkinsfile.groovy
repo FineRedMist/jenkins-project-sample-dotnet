@@ -2,6 +2,6 @@
 
 import org.sample.jenkins.CSharpBuilder
 
-CSharpBuilder builder = CSharpBuilder(this)
+CSharpBuilder builder = new CSharpBuilder(this)
 
 builder.run()
