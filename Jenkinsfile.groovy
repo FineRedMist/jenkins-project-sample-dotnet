@@ -1,4 +1,4 @@
-@library('JenkinsLibrarySample')_
+@Library('JenkinsLibrarySample')_
 
 import org.sample.jenkins.CSharpBuilder
 
