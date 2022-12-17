@@ -1,0 +1,17 @@
+{
+	"author": "Brent Scriver", 
+	"classifications": [ "Library", "Jenkins" ], 
+	"name": "Jenkins Library", 
+	"identity": "Jenkins.Library", // Unique name for this template 
+	"shortName": "JenkinsLibrary", // Short name that can be used on the cli 
+	"tags": { "language": "C#", "type": "solution" }, // Specify that this template is in C#. 
+	"sourceName": "JenkinsSample", // Will replace the string 'Sayedha.StarterWeb' with the value provided via -n. 
+	"preferNameDirectory" : "true",
+	"guids": [
+		"DCC3F81B-B1E6-4610-9B03-3E483835ADF4",
+		"B9E0DD30-086E-4053-8DE6-A3376381B510",
+		"BC3571C2-01E2-409A-8F4C-1F1A6B682343",
+		"E7D64D5F-20DF-4CFE-8BE5-91BB3006FC22",
+		"F0D8C4AD-95E7-4905-B949-EF05F04B4C3B"
+	]
+}
