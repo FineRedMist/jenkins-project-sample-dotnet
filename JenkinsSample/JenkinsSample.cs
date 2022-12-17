@@ -1,4 +1,4 @@
-﻿namespace CodeLibrarySample
+﻿namespace JenkinsSample
 {
     /// <summary>
     /// The JenkinsSample class.

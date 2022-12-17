@@ -1,7 +1,7 @@
-using CodeLibrarySample;
+using JenkinsSample;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Sample.Tests
+namespace JenkinsSample.Tests
 {
     [TestClass]
     public class JenkinsSampleTest

@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\CodeLibrarySample\CodeLibrarySample.csproj" />
+    <ProjectReference Include="..\..\JenkinsSample\JenkinsSample.csproj" />
   </ItemGroup>
 
 </Project>
