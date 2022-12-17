@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32328.378
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeLibrarySample", "CodeLibrarySample\CodeLibrarySample.csproj", "{DCC3F81B-B1E6-4610-9B03-3E483835ADF4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JenkinsSample", "JenkinsSample\JenkinsSample.csproj", "{DCC3F81B-B1E6-4610-9B03-3E483835ADF4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{B9E0DD30-086E-4053-8DE6-A3376381B510}"
 EndProject
@@ -17,7 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample.Tests", "Tests\Sample.Tests\Sample.Tests.csproj", "{E7D64D5F-20DF-4CFE-8BE5-91BB3006FC22}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JenkinsSample.Tests", "Tests\JenkinsSample.Tests\JenkinsSample.Tests.csproj", "{E7D64D5F-20DF-4CFE-8BE5-91BB3006FC22}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

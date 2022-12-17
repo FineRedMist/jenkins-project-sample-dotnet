@@ -1,11 +1,10 @@
 {
-  "Version": "1.0.17",
+  "Version": "1.0.18",
   "NugetSource": "http://localhost:8081/repository/nuget-hosted",
   "NugetKeyCredentialsId": "Nexus-NuGet-API-Key",
   "SendSlack": true,
   "SendSlackStartNotification": true,
   "SlackChannel": "#build-notifications",
   "GitHubStatusName": "Build Status",
-  "GitHubStatusCredentialsId": "GitHub-Status-Notify"
-
+  "GitHubStatusCredentialsId": "GitHub-Status-Notify",
 }
