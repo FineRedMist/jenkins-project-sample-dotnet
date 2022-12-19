@@ -1,7 +1,9 @@
 {
+	"$schema": "http://json.schemastore.org/template",
 	"author": "Brent Scriver", 
-	"classifications": [ "Library", "Jenkins" ], 
+	"classifications": [ "library", "jenkins" ], 
 	"name": "Jenkins Library", 
+	"description": "A library that is set up to build and test in Jenkins.",
 	"identity": "Jenkins.Library", // Unique name for this template 
 	"shortName": "JenkinsLibrary", // Short name that can be used on the cli 
 	"tags": { "language": "C#", "type": "solution" }, // Specify that this template is in C#. 
@@ -13,5 +15,55 @@
 		"BC3571C2-01E2-409A-8F4C-1F1A6B682343",
 		"E7D64D5F-20DF-4CFE-8BE5-91BB3006FC22",
 		"F0D8C4AD-95E7-4905-B949-EF05F04B4C3B"
-	]
+	],
+	"symbols": {
+		"LocalNuget": {
+	        "type": "parameter",
+	        "datatype": "string",
+	        "defaultValue": "https://<server>:<port>/repository/nuget-hosted",
+	        "replaces": "http://coriander:8081/repository/nuget-hosted",
+	        "description": "The local nuget server to push and pull nuget packages to and from.",
+	        "isRequired": true
+	    },
+	    "NugetCredentialsId": {
+	        "type": "parameter",
+	        "datatype": "string",
+	        "defaultValue": "Nexus-NuGet-API-Key",
+	        "replaces": "Nexus-NuGet-API-Key",
+	        "description": "The credentials in Jenkins with the API key for accessing the nuget repository.",
+	        "isRequired": true
+	    },
+	    "JenkinsLibrary": {
+	        "type": "parameter",
+	        "datatype": "string",
+	        "defaultValue": "JenkinsLibrarySample",
+	        "replaces": "JenkinsLibrarySample",
+	        "description": "The shared library name set up in Jenkins for building projects.",
+	        "isRequired": true
+	    },
+	    "SlackChannel": {
+	        "type": "parameter",
+	        "datatype": "string",
+	        "defaultValue": "#build-notifications",
+	        "replaces": "#build-notifications",
+	        "description": "The Slack channel to send build notifications to. If this is not set, the default Slack channel is used.",
+	        "isRequired": false
+	    },
+	    "GitHubStatusName": {
+	        "type": "parameter",
+	        "datatype": "string",
+	        "defaultValue": "Build Status",
+	        "replaces": "Build Status",
+	        "description": "The name to post to GitHub for status updates. If this is empty, posting additional status information to GitHub is disabled.",
+	        "isRequired": false
+	    },
+	    "GitHubStatusCredentialsId": {
+	        "type": "parameter",
+	        "datatype": "string",
+	        "defaultValue": "GitHub-Status-Notify",
+	        "replaces": "GitHub-Status-Notify",
+	        "description": "The credentials id in Jenkins that provides the access token to post the GitHub status. If this is empty, posting additional status information to GitHub is disabled.",
+	        "isRequired": false
+	    },
+	}
 }
