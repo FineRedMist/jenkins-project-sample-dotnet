@@ -1,4 +1,4 @@
-@Library('JenkinsLibrarySample')_
+@Library('jenkins-shared-library-groovy')_
 
 import org.sample.jenkins.CSharpBuilder
 
