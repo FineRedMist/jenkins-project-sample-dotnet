@@ -2,7 +2,7 @@ The JenkinsSample
 
 This is a sample project to demonstrate building a C# project in Jenkins and running tests.
 
-The sample now uses a [Jenkins shared library](https://github.com/FineRedMist/JenkinsLibrarySample) which is also public to for building. This project can be forked (I don't recommend relying on it directly, as it would be running code you haven't reviewed).
+The sample now uses a [Jenkins shared library](https://github.com/FineRedMist/jenkins-shared-library-groovy) which is also public to for building. This project can be forked (I don't recommend relying on it directly, as it would be running code you haven't reviewed).
 
 The corresponding blog posts (so far) are available at:
  * [Personal CI/CD](https://www.oneoddsock.com/2022/04/02/personal-ci-cd/)

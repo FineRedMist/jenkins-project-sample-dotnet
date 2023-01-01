@@ -1,5 +1,5 @@
 {
-  "Version": "1.0.19",
+  "Version": "1.0.20",
   "NugetSource": "http://coriander:8081/repository/nuget-hosted",
   "NugetKeyCredentialsId": "Nexus-NuGet-API-Key",
   "SendSlack": true,
